@@ -1,13 +1,16 @@
 <!doctype html>
-
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>オフライン個人メモ帳</title>  <link rel="manifest" href="manifest.webmanifest">
+  <title>オフライン個人メモ帳</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0b0f14">
   <link rel="icon" href="icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="icon-192.png">  <style>
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <style>
     :root{
       --bg:#0b0f14;
       --panel:#121821;
@@ -260,7 +263,8 @@
       .sidebar{border-right:none;border-bottom:1px solid var(--line)}
       textarea{min-height:38vh}
     }
-  </style></head>
+  </style>
+</head>
 <body>
   <div id="lockScreen" class="lock-screen">
     <div class="lock-card">
@@ -275,7 +279,9 @@
       </div>
       <div id="lockMessage" class="muted" style="text-align:center"></div>
     </div>
-  </div>  <div class="app hide" id="appRoot">
+  </div>
+
+  <div class="app hide" id="appRoot">
     <aside class="sidebar">
       <div class="card topbar">
         <div>
@@ -285,104 +291,107 @@
           </div>
           <div class="muted" style="margin-top:6px">オフライン / AES暗号化 / フォルダ / 並べ替え対応</div>
         </div>
-      </div><div class="card search-wrap">
-    <div class="row">
-      <div class="grow"><input id="searchInput" placeholder="検索（タイトル / 本文 / タグ）"></div>
-      <div class="w-160">
-        <select id="folderFilter">
-          <option value="">すべてのフォルダ</option>
-        </select>
       </div>
-      <div class="w-160">
-        <select id="tagFilter">
-          <option value="">すべてのタグ</option>
-        </select>
-      </div>
-    </div>
 
-    <div class="row" style="margin-top:10px">
-      <div class="w-160">
-        <select id="sortModeSelect">
-          <option value="custom">並び順: カスタム</option>
-          <option value="updated_desc">更新が新しい順</option>
-          <option value="updated_asc">更新が古い順</option>
-          <option value="title_asc">タイトル昇順</option>
-          <option value="title_desc">タイトル降順</option>
-          <option value="created_desc">作成が新しい順</option>
-          <option value="created_asc">作成が古い順</option>
-        </select>
+      <div class="card search-wrap">
+        <div class="row">
+          <div class="grow"><input id="searchInput" placeholder="検索（タイトル / 本文 / タグ）"></div>
+          <div class="w-160">
+            <select id="folderFilter">
+              <option value="">すべてのフォルダ</option>
+            </select>
+          </div>
+          <div class="w-160">
+            <select id="tagFilter">
+              <option value="">すべてのタグ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="w-160">
+            <select id="sortModeSelect">
+              <option value="custom">並び順: カスタム</option>
+              <option value="updated_desc">更新が新しい順</option>
+              <option value="updated_asc">更新が古い順</option>
+              <option value="title_asc">タイトル昇順</option>
+              <option value="title_desc">タイトル降順</option>
+              <option value="created_desc">作成が新しい順</option>
+              <option value="created_asc">作成が古い順</option>
+            </select>
+          </div>
+          <div class="actions grow">
+            <button id="newBtn" class="primary">＋ 新規メモ</button>
+            <button id="duplicateBtn">複製</button>
+            <button id="moveUpBtn">↑ 上へ</button>
+            <button id="moveDownBtn">↓ 下へ</button>
+          </div>
+        </div>
       </div>
-      <div class="actions grow">
-        <button id="newBtn" class="primary">＋ 新規メモ</button>
-        <button id="duplicateBtn">複製</button>
-        <button id="moveUpBtn">↑ 上へ</button>
-        <button id="moveDownBtn">↓ 下へ</button>
+
+      <div class="card" style="display:flex;flex-direction:column;min-height:280px;max-height:52vh">
+        <div class="topbar" style="padding-bottom:8px">
+          <strong>メモ一覧</strong>
+          <span class="muted" id="noteCount">0件</span>
+        </div>
+        <div id="noteList" class="note-list"></div>
       </div>
-    </div>
+
+      <div class="card topbar">
+        <div class="toolbar">
+          <button id="exportBtn">書き出し</button>
+          <button id="exportAutoBackupBtn">自動バックアップ出力</button>
+          <label class="file-btn" for="importInput">読み込み</label>
+          <input id="importInput" type="file" accept="application/json" class="hide">
+        </div>
+        <div class="footer-note">通常バックアップと自動バックアップの両方を読み込めます。</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="card editor" id="editorCard">
+        <div class="row">
+          <div class="grow"><input id="titleInput" placeholder="タイトル"></div>
+          <div class="w-160"><input id="folderInput" placeholder="フォルダ 例: 日記"></div>
+          <div class="w-200"><input id="tagsInput" placeholder="タグ 例: 日記,ゲーム,買い物"></div>
+        </div>
+
+        <div class="folder-row">
+          <div class="folder-badge" id="folderBadge">フォルダ: 未設定</div>
+          <div class="chip">自動保存</div>
+          <div class="chip">自動バックアップ: 60秒ごと</div>
+          <div class="chip" id="createdChip">作成: -</div>
+          <div class="chip" id="updatedChip">更新: -</div>
+          <div class="chip" id="saveState">状態: 保存済み</div>
+          <div class="chip" id="backupState">バックアップ: 未作成</div>
+        </div>
+
+        <textarea id="contentInput" placeholder="ここにメモを書く"></textarea>
+
+        <div class="row">
+          <div class="actions grow">
+            <button id="pinBtn" class="warn">☆ ピン留め</button>
+            <button id="deleteBtn" class="danger">削除</button>
+            <button id="clearBtn" class="ghost">入力クリア</button>
+          </div>
+          <div class="actions">
+            <button id="previewToggleBtn">プレビュー切替</button>
+          </div>
+        </div>
+
+        <div id="previewBox" class="preview hide"></div>
+      </section>
+
+      <section class="card empty hide" id="emptyState">
+        <div>
+          <h2 style="margin:0 0 8px">メモを作成しよう</h2>
+          <div class="muted">「＋ 新規メモ」で追加できます。保存は自動です。</div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <div class="card" style="display:flex;flex-direction:column;min-height:280px;max-height:52vh">
-    <div class="topbar" style="padding-bottom:8px">
-      <strong>メモ一覧</strong>
-      <span class="muted" id="noteCount">0件</span>
-    </div>
-    <div id="noteList" class="note-list"></div>
-  </div>
-
-  <div class="card topbar">
-    <div class="toolbar">
-      <button id="exportBtn">書き出し</button>
-      <button id="exportAutoBackupBtn">自動バックアップ出力</button>
-      <label class="file-btn" for="importInput">読み込み</label>
-      <input id="importInput" type="file" accept="application/json" class="hide">
-    </div>
-    <div class="footer-note">通常バックアップと自動バックアップの両方を読み込めます。</div>
-  </div>
-</aside>
-
-<main class="main">
-  <section class="card editor" id="editorCard">
-    <div class="row">
-      <div class="grow"><input id="titleInput" placeholder="タイトル"></div>
-      <div class="w-160"><input id="folderInput" placeholder="フォルダ 例: 日記"></div>
-      <div class="w-200"><input id="tagsInput" placeholder="タグ 例: 日記,ゲーム,買い物"></div>
-    </div>
-
-    <div class="folder-row">
-      <div class="folder-badge" id="folderBadge">フォルダ: 未設定</div>
-      <div class="chip">自動保存</div>
-      <div class="chip">自動バックアップ: 60秒ごと</div>
-      <div class="chip" id="createdChip">作成: -</div>
-      <div class="chip" id="updatedChip">更新: -</div>
-      <div class="chip" id="saveState">状態: 保存済み</div>
-      <div class="chip" id="backupState">バックアップ: 未作成</div>
-    </div>
-
-    <textarea id="contentInput" placeholder="ここにメモを書く"></textarea>
-
-    <div class="row">
-      <div class="actions grow">
-        <button id="pinBtn" class="warn">☆ ピン留め</button>
-        <button id="deleteBtn" class="danger">削除</button>
-        <button id="clearBtn" class="ghost">入力クリア</button>
-      </div>
-      <div class="actions">
-        <button id="previewToggleBtn">プレビュー切替</button>
-      </div>
-    </div>
-
-    <div id="previewBox" class="preview hide"></div>
-  </section>
-
-  <section class="card empty hide" id="emptyState">
-    <div>
-      <h2 style="margin:0 0 8px">メモを作成しよう</h2>
-      <div class="muted">「＋ 新規メモ」で追加できます。保存は自動です。</div>
-    </div>
-  </section>
-</main>
-
-  </div>  <script>
+  <script>
     const STORAGE_KEY = 'offline_private_memo_v1';
     const LOCK_KEY = 'offline_private_memo_lock_v1';
     const AUTO_BACKUP_KEY = 'offline_private_memo_autobackup_v1';
@@ -724,8 +733,7 @@
         .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
         .replace(/\*(.*?)\*/g,'<em>$1</em>')
         .replace(/`([^`]+)`/g,'<code>$1</code>')
-        .replace(/
-/g,'<br>');
+        .replace(/\n/g,'<br>');
     }
 
     function rebuildFolderFilter(){
@@ -751,8 +759,7 @@
       }
       els.noteList.innerHTML = notes.map(note => {
         const title = note.title?.trim() || '無題メモ';
-        const snippet = (note.content || '').replace(/
-+/g, ' ').trim().slice(0, 52) || '本文なし';
+        const snippet = (note.content || '').replace(/\n+/g, ' ').trim().slice(0, 52) || '本文なし';
         const tags = (note.tags || []).slice(0,3).map(t => `#${escapeHtml(t)}`).join(' ');
         const folder = note.folder ? `📁 ${escapeHtml(note.folder)}` : '📁 未設定';
         return `<button class="note-item ${note.id === state.selectedId ? 'active' : ''}" data-id="${note.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><strong style="text-align:left">${note.pinned ? '⭐ ' : ''}${escapeHtml(title)}</strong><span class="muted">${formatDate(note.updatedAt).slice(0,16)}</span></div><div class="muted" style="text-align:left">${folder}</div><div class="muted" style="text-align:left">${escapeHtml(snippet)}</div>${tags ? `<div class="muted" style="text-align:left">${tags}</div>` : ''}</button>`;
@@ -983,7 +990,9 @@
     saveAutoBackup().catch(() => {});
     refreshLockUi();
     els.appRoot.style.display = 'none';
-  </script>  <script>
+  </script>
+
+  <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
         try {
@@ -994,5 +1003,6 @@
         }
       });
     }
-  </script></body>
+  </script>
+</body>
 </html>
