@@ -637,7 +637,7 @@
       render();
     }
 
-    els.unlockBtn.addEventListener('click', handleUnlock);
+    els.unlockBtn.onclick = handleUnlock;
 
     els.changePassBtn.addEventListener('click', () => {
       const saved = getSavedPasscode();
