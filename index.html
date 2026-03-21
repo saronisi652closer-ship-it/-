@@ -398,24 +398,42 @@
     }
 
     function openApp() {
-      els.lockScreen.classList.add('hide');
-      els.appRoot.classList.remove('hide');
-      render();
+  els.lockScreen.style.display = 'none';
+  els.appRoot.classList.remove('hide');
+  els.appRoot.style.display = 'grid';
+  render();
     }
 
     function handleUnlock() {
-      const saved = getSavedPasscode();
-      const pass = els.lockPassInput.value.trim();
-      const confirmPass = els.lockPassConfirmInput.value.trim();
+  const saved = getSavedPasscode();
+  const pass = els.lockPassInput.value.trim();
+  const confirmPass = els.lockPassConfirmInput.value.trim();
 
-      if (!saved || isChangingPasscode) {
-        if (pass.length < 4) return setLockMessage('パスコードは4文字以上で設定してください。');
-        if (pass !== confirmPass) return setLockMessage('確認用パスコードが一致しません。');
-        savePasscode(pass);
-        isChangingPasscode = false;
-        openApp();
-        return;
-      }
+  if (!saved || isChangingPasscode) {
+    if (pass.length < 4) {
+      setLockMessage('パスコードは4文字以上で設定してください。');
+      return;
+    }
+    if (pass !== confirmPass) {
+      setLockMessage('確認用パスコードが一致しません。');
+      return;
+    }
+
+    savePasscode(pass);
+    isChangingPasscode = false;
+    setLockMessage('保存しました。開きます...');
+    openApp();
+    return;
+  }
+
+  if (pass !== saved) {
+    setLockMessage('パスコードが違います。');
+    return;
+  }
+
+  setLockMessage('解除しました。開きます...');
+  openApp();
+    }
 
       if (pass !== saved) return setLockMessage('パスコードが違います。');
       openApp();
@@ -740,6 +758,7 @@
     scheduleAutoBackup();
     saveAutoBackup();
     refreshLockUi();
+    els.appRoot.style.display = 'none';
   </script>
 
   <script>
