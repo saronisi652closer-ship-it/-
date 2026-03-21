@@ -1,0 +1,615 @@
+<!doctype html>
+
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>オフライン個人メモ帳</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#121821;
+      --panel-2:#18212c;
+      --text:#eaf1f8;
+      --muted:#9fb0c3;
+      --line:#263241;
+      --accent:#66b3ff;
+      --danger:#ff6b6b;
+      --warn:#ffd166;
+      --ok:#7bd88f;
+      --shadow:0 10px 30px rgba(0,0,0,.28);
+      --radius:18px;
+    }*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:linear-gradient(180deg,#091018 0%, #0d141d 100%);
+  color:var(--text);
+}
+
+.app{
+  min-height:100%;
+  display:grid;
+  grid-template-columns:320px 1fr;
+}
+
+.sidebar{
+  border-right:1px solid var(--line);
+  background:rgba(12,17,24,.88);
+  backdrop-filter:blur(10px);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.main{
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+
+.topbar{
+  padding:12px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.brand{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  font-weight:700;
+  letter-spacing:.02em;
+}
+
+.brand-badge{
+  width:38px;height:38px;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#65b7ff,#8c7cff);
+  color:white;font-size:18px;
+  box-shadow:0 8px 20px rgba(102,179,255,.25);
+}
+
+.muted{color:var(--muted);font-size:13px}
+
+.actions,.toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+button,.btn,label.file-btn{
+  border:none;
+  border-radius:14px;
+  padding:11px 14px;
+  background:var(--panel-2);
+  color:var(--text);
+  font:inherit;
+  cursor:pointer;
+  border:1px solid var(--line);
+  transition:.18s ease;
+}
+button:hover,.btn:hover,label.file-btn:hover{transform:translateY(-1px);border-color:#35506d}
+button.primary{background:linear-gradient(135deg,#4da7ff,#7a78ff);border:none}
+button.danger{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.4);color:#ffd4d4}
+button.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)}
+button.ghost{background:transparent}
+
+input,textarea,select{
+  width:100%;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#0f151d;
+  color:var(--text);
+  font:inherit;
+  outline:none;
+  padding:12px 14px;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(102,179,255,.12)}
+
+textarea{
+  min-height:52vh;
+  resize:vertical;
+  line-height:1.65;
+}
+
+.search-wrap{padding:12px}
+.note-list{
+  padding:0 8px 8px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.note-item{
+  padding:12px;
+  border-radius:16px;
+  border:1px solid transparent;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.note-item:hover{background:#111925;border-color:#223140}
+.note-item.active{background:#152231;border-color:#35506d}
+
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.grow{flex:1 1 260px}
+.w-200{width:200px;max-width:100%}
+
+.editor{
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:0;
+}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);
+  background:#101821;
+  color:var(--muted);
+  padding:6px 10px;border-radius:999px;font-size:12px;
+}
+
+.empty{
+  min-height:50vh;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:30px;
+}
+
+.preview{
+  white-space:pre-wrap;
+  line-height:1.7;
+  background:#0e141c;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px;
+  min-height:180px;
+}
+
+.footer-note{font-size:12px;color:var(--muted);padding:0 4px}
+.hide{display:none !important}
+
+@media (max-width: 900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{border-right:none;border-bottom:1px solid var(--line)}
+  textarea{min-height:38vh}
+}
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="card topbar">
+        <div>
+          <div class="brand">
+            <div class="brand-badge">📝</div>
+            <div>個人用メモ帳</div>
+          </div>
+          <div class="muted" style="margin-top:6px">完全オフライン対応 / 端末内保存 / JSONバックアップ</div>
+        </div>
+      </div><div class="card search-wrap">
+    <div class="row">
+      <div class="grow"><input id="searchInput" placeholder="検索（タイトル / 本文 / タグ）"></div>
+      <div class="w-200">
+        <select id="tagFilter">
+          <option value="">すべてのタグ</option>
+        </select>
+      </div>
+    </div>
+    <div class="actions" style="margin-top:10px">
+      <button id="newBtn" class="primary">＋ 新規メモ</button>
+      <button id="duplicateBtn">複製</button>
+    </div>
+  </div>
+
+  <div class="card" style="display:flex;flex-direction:column;min-height:280px;max-height:52vh">
+    <div class="topbar" style="padding-bottom:8px">
+      <strong>メモ一覧</strong>
+      <span class="muted" id="noteCount">0件</span>
+    </div>
+    <div id="noteList" class="note-list"></div>
+  </div>
+
+  <div class="card topbar">
+    <div class="toolbar">
+      <button id="exportBtn">書き出し</button>
+      <label class="file-btn" for="importInput">読み込み</label>
+      <input id="importInput" type="file" accept="application/json" class="hide">
+    </div>
+    <div class="footer-note">他端末へ移したいときは「書き出し」→ JSONを送る →「読み込み」</div>
+  </div>
+</aside>
+
+<main class="main">
+  <section class="card editor" id="editorCard">
+    <div class="row">
+      <div class="grow"><input id="titleInput" placeholder="タイトル"></div>
+      <div class="w-200"><input id="tagsInput" placeholder="タグ 例: 日記,ゲーム,買い物"></div>
+    </div>
+
+    <div class="chips">
+      <div class="chip">自動保存</div>
+      <div class="chip" id="createdChip">作成: -</div>
+      <div class="chip" id="updatedChip">更新: -</div>
+      <div class="chip" id="saveState">状態: 保存済み</div>
+    </div>
+
+    <textarea id="contentInput" placeholder="ここにメモを書く"></textarea>
+
+    <div class="row">
+      <div class="actions grow">
+        <button id="pinBtn" class="warn">☆ ピン留め</button>
+        <button id="deleteBtn" class="danger">削除</button>
+        <button id="clearBtn" class="ghost">入力クリア</button>
+      </div>
+      <div class="actions">
+        <button id="previewToggleBtn">プレビュー切替</button>
+      </div>
+    </div>
+
+    <div id="previewBox" class="preview hide"></div>
+  </section>
+
+  <section class="card empty hide" id="emptyState">
+    <div>
+      <h2 style="margin:0 0 8px">メモを作成しよう</h2>
+      <div class="muted">「＋ 新規メモ」で追加できます。保存は自動です。</div>
+    </div>
+  </section>
+</main>
+
+  </div>  <script>
+    const STORAGE_KEY = 'offline_private_memo_v1';
+
+    const els = {
+      searchInput: document.getElementById('searchInput'),
+      tagFilter: document.getElementById('tagFilter'),
+      noteList: document.getElementById('noteList'),
+      noteCount: document.getElementById('noteCount'),
+      newBtn: document.getElementById('newBtn'),
+      duplicateBtn: document.getElementById('duplicateBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      importInput: document.getElementById('importInput'),
+      titleInput: document.getElementById('titleInput'),
+      tagsInput: document.getElementById('tagsInput'),
+      contentInput: document.getElementById('contentInput'),
+      createdChip: document.getElementById('createdChip'),
+      updatedChip: document.getElementById('updatedChip'),
+      saveState: document.getElementById('saveState'),
+      pinBtn: document.getElementById('pinBtn'),
+      deleteBtn: document.getElementById('deleteBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      previewToggleBtn: document.getElementById('previewToggleBtn'),
+      previewBox: document.getElementById('previewBox'),
+      editorCard: document.getElementById('editorCard'),
+      emptyState: document.getElementById('emptyState')
+    };
+
+    let state = loadState();
+    let saveTimer = null;
+    let previewMode = false;
+
+    function nowISO(){
+      return new Date().toISOString();
+    }
+
+    function uid(){
+      return 'm_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    }
+
+    function formatDate(iso){
+      if(!iso) return '-';
+      const d = new Date(iso);
+      if(Number.isNaN(d.getTime())) return '-';
+      return d.toLocaleString('ja-JP');
+    }
+
+    function normalizeTags(raw){
+      return String(raw || '')
+        .split(',')
+        .map(v => v.trim())
+        .filter(Boolean)
+        .filter((v, i, arr) => arr.indexOf(v) === i);
+    }
+
+    function createBlankNote(){
+      const now = nowISO();
+      return {
+        id: uid(),
+        title: '',
+        content: '',
+        tags: [],
+        pinned: false,
+        createdAt: now,
+        updatedAt: now
+      };
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw){
+          const first = createBlankNote();
+          return { notes:[first], selectedId:first.id };
+        }
+        const data = JSON.parse(raw);
+        if(!data || !Array.isArray(data.notes)) throw new Error('broken');
+        if(!data.notes.length){
+          const first = createBlankNote();
+          return { notes:[first], selectedId:first.id };
+        }
+        return {
+          notes: data.notes,
+          selectedId: data.selectedId || data.notes[0].id
+        };
+      }catch(err){
+        const first = createBlankNote();
+        return { notes:[first], selectedId:first.id };
+      }
+    }
+
+    function persist(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      els.saveState.textContent = '状態: 保存済み';
+    }
+
+    function queueSave(){
+      els.saveState.textContent = '状態: 保存中...';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(persist, 250);
+    }
+
+    function getSelectedNote(){
+      return state.notes.find(n => n.id === state.selectedId) || null;
+    }
+
+    function sortedNotes(notes){
+      return [...notes].sort((a,b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+    }
+
+    function filteredNotes(){
+      const q = els.searchInput.value.trim().toLowerCase();
+      const tag = els.tagFilter.value;
+      return sortedNotes(state.notes).filter(n => {
+        const hay = [n.title, n.content, (n.tags||[]).join(' ')].join(' ').toLowerCase();
+        const matchesQ = !q || hay.includes(q);
+        const matchesTag = !tag || (n.tags || []).includes(tag);
+        return matchesQ && matchesTag;
+      });
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+
+    function renderPreview(text){
+      return escapeHtml(text)
+        .replace(/^### (.*)$/gm,'<h3>$1</h3>')
+        .replace(/^## (.*)$/gm,'<h2>$1</h2>')
+        .replace(/^# (.*)$/gm,'<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g,'<em>$1</em>')
+        .replace(/`([^`]+)`/g,'<code>$1</code>')
+        .replace(/\n/g,'<br>');
+    }
+
+    function rebuildTagFilter(){
+      const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort((a,b)=>a.localeCompare(b,'ja'));
+      const current = els.tagFilter.value;
+      els.tagFilter.innerHTML = '<option value="">すべてのタグ</option>' +
+        allTags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+      if(allTags.includes(current)) els.tagFilter.value = current;
+    }
+
+    function renderList(){
+      const notes = filteredNotes();
+      els.noteCount.textContent = notes.length + '件';
+      if(!notes.length){
+        els.noteList.innerHTML = '<div class="muted" style="padding:12px">該当するメモがありません</div>';
+        return;
+      }
+      els.noteList.innerHTML = notes.map(note => {
+        const title = note.title?.trim() || '無題メモ';
+        const snippet = (note.content || '').replace(/\n+/g, ' ').trim().slice(0, 52) || '本文なし';
+        const tags = (note.tags || []).slice(0,3).map(t => `#${escapeHtml(t)}`).join(' ');
+        return `
+          <button class="note-item ${note.id === state.selectedId ? 'active' : ''}" data-id="${note.id}">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+              <strong style="text-align:left">${note.pinned ? '⭐ ' : ''}${escapeHtml(title)}</strong>
+              <span class="muted">${formatDate(note.updatedAt).slice(0,16)}</span>
+            </div>
+            <div class="muted" style="text-align:left">${escapeHtml(snippet)}</div>
+            ${tags ? `<div class="muted" style="text-align:left">${tags}</div>` : ''}
+          </button>
+        `;
+      }).join('');
+
+      [...els.noteList.querySelectorAll('.note-item')].forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedId = btn.dataset.id;
+          render();
+        });
+      });
+    }
+
+    function renderEditor(){
+      const note = getSelectedNote();
+      const hasNote = !!note;
+      els.editorCard.classList.toggle('hide', !hasNote);
+      els.emptyState.classList.toggle('hide', hasNote);
+      if(!note) return;
+
+      els.titleInput.value = note.title || '';
+      els.tagsInput.value = (note.tags || []).join(', ');
+      els.contentInput.value = note.content || '';
+      els.createdChip.textContent = '作成: ' + formatDate(note.createdAt);
+      els.updatedChip.textContent = '更新: ' + formatDate(note.updatedAt);
+      els.pinBtn.textContent = note.pinned ? '★ ピン解除' : '☆ ピン留め';
+      els.previewBox.innerHTML = renderPreview(note.content || '');
+      els.previewBox.classList.toggle('hide', !previewMode);
+      els.contentInput.classList.toggle('hide', previewMode);
+    }
+
+    function render(){
+      rebuildTagFilter();
+      renderList();
+      renderEditor();
+    }
+
+    function updateSelectedNote(patch){
+      const idx = state.notes.findIndex(n => n.id === state.selectedId);
+      if(idx < 0) return;
+      state.notes[idx] = {
+        ...state.notes[idx],
+        ...patch,
+        updatedAt: nowISO()
+      };
+      queueSave();
+      render();
+    }
+
+    els.newBtn.addEventListener('click', () => {
+      const note = createBlankNote();
+      state.notes.unshift(note);
+      state.selectedId = note.id;
+      queueSave();
+      render();
+      els.titleInput.focus();
+    });
+
+    els.duplicateBtn.addEventListener('click', () => {
+      const current = getSelectedNote();
+      if(!current) return;
+      const copy = {
+        ...structuredClone(current),
+        id: uid(),
+        title: (current.title || '無題メモ') + '（コピー）',
+        pinned: false,
+        createdAt: nowISO(),
+        updatedAt: nowISO()
+      };
+      state.notes.unshift(copy);
+      state.selectedId = copy.id;
+      queueSave();
+      render();
+    });
+
+    els.deleteBtn.addEventListener('click', () => {
+      const current = getSelectedNote();
+      if(!current) return;
+      const ok = confirm('このメモを削除しますか？');
+      if(!ok) return;
+      state.notes = state.notes.filter(n => n.id !== current.id);
+      if(!state.notes.length){
+        const first = createBlankNote();
+        state.notes = [first];
+        state.selectedId = first.id;
+      }else{
+        state.selectedId = state.notes[0].id;
+      }
+      queueSave();
+      render();
+    });
+
+    els.clearBtn.addEventListener('click', () => {
+      const ok = confirm('入力中のタイトル・本文を空にしますか？');
+      if(!ok) return;
+      updateSelectedNote({ title:'', content:'', tags:[] });
+    });
+
+    els.pinBtn.addEventListener('click', () => {
+      const current = getSelectedNote();
+      if(!current) return;
+      updateSelectedNote({ pinned: !current.pinned });
+    });
+
+    els.previewToggleBtn.addEventListener('click', () => {
+      previewMode = !previewMode;
+      renderEditor();
+    });
+
+    els.titleInput.addEventListener('input', e => {
+      updateSelectedNote({ title: e.target.value });
+    });
+
+    els.tagsInput.addEventListener('input', e => {
+      updateSelectedNote({ tags: normalizeTags(e.target.value) });
+    });
+
+    els.contentInput.addEventListener('input', e => {
+      updateSelectedNote({ content: e.target.value });
+    });
+
+    els.searchInput.addEventListener('input', renderList);
+    els.tagFilter.addEventListener('change', renderList);
+
+    els.exportBtn.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      a.href = url;
+      a.download = `memo-backup-${stamp}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    els.importInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if(!data || !Array.isArray(data.notes)) throw new Error('形式が違います');
+        if(!confirm('現在のメモを上書きして読み込みますか？')) return;
+        state = data;
+        if(!state.notes.length){
+          const first = createBlankNote();
+          state = { notes:[first], selectedId:first.id };
+        }
+        persist();
+        render();
+        alert('読み込みました');
+      }catch(err){
+        alert('読み込みに失敗しました。JSONファイルを確認してください。');
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    window.addEventListener('beforeunload', persist);
+    render();
+  </script></body>
+</html>
