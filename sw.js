@@ -1,4 +1,4 @@
-const CACHE_NAME = 'offline-private-memo-pwa-v2';
+const CACHE_NAME = 'offline-private-memo-pwa-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -25,9 +25,11 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
+
       return fetch(event.request)
         .then((response) => {
           const cloned = response.clone();
