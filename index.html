@@ -25,6 +25,7 @@
       --shadow:0 10px 30px rgba(0,0,0,.28);
       --radius:18px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -39,6 +40,7 @@
       display:grid;
       grid-template-columns:320px 1fr;
     }
+
     .sidebar{
       border-right:1px solid var(--line);
       background:rgba(12,17,24,.88);
@@ -48,6 +50,7 @@
       flex-direction:column;
       gap:12px;
     }
+
     .main{
       padding:14px;
       display:flex;
@@ -55,12 +58,14 @@
       gap:12px;
       min-width:0;
     }
+
     .card{
       background:var(--panel);
       border:1px solid var(--line);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
     }
+
     .topbar{
       padding:12px;
       display:flex;
@@ -69,6 +74,7 @@
       align-items:center;
       justify-content:space-between;
     }
+
     .brand{
       display:flex;
       gap:10px;
@@ -76,6 +82,7 @@
       font-weight:700;
       letter-spacing:.02em;
     }
+
     .brand-badge{
       width:38px;height:38px;border-radius:12px;
       display:grid;place-items:center;
@@ -83,13 +90,16 @@
       color:white;font-size:18px;
       box-shadow:0 8px 20px rgba(102,179,255,.25);
     }
+
     .muted{color:var(--muted);font-size:13px}
+
     .actions,.toolbar{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       align-items:center;
     }
+
     button,.btn,label.file-btn{
       border:none;
       border-radius:14px;
@@ -101,7 +111,12 @@
       border:1px solid var(--line);
       transition:.18s ease;
     }
-    button:hover,.btn:hover,label.file-btn:hover{transform:translateY(-1px);border-color:#35506d}
+
+    button:hover,.btn:hover,label.file-btn:hover{
+      transform:translateY(-1px);
+      border-color:#35506d;
+    }
+
     button.primary{background:linear-gradient(135deg,#4da7ff,#7a78ff);border:none}
     button.danger{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.4);color:#ffd4d4}
     button.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)}
@@ -117,7 +132,11 @@
       outline:none;
       padding:12px 14px;
     }
-    input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(102,179,255,.12)}
+
+    input:focus,textarea:focus,select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(102,179,255,.12);
+    }
 
     textarea{
       min-height:52vh;
@@ -126,6 +145,7 @@
     }
 
     .search-wrap{padding:12px}
+
     .note-list{
       padding:0 8px 8px;
       overflow:auto;
@@ -133,6 +153,7 @@
       flex-direction:column;
       gap:8px;
     }
+
     .note-item{
       padding:12px;
       border-radius:16px;
@@ -143,6 +164,7 @@
       flex-direction:column;
       gap:6px;
     }
+
     .note-item:hover{background:#111925;border-color:#223140}
     .note-item.active{background:#152231;border-color:#35506d}
 
@@ -195,6 +217,7 @@
       padding:20px;
       background:linear-gradient(180deg,#091018 0%, #0d141d 100%);
     }
+
     .lock-card{
       width:min(100%, 430px);
       background:var(--panel);
@@ -206,6 +229,7 @@
       flex-direction:column;
       gap:14px;
     }
+
     .lock-icon{
       width:64px;height:64px;border-radius:18px;
       display:grid;place-items:center;
@@ -214,6 +238,7 @@
       background:linear-gradient(135deg,#4da7ff,#7a78ff);
       box-shadow:0 8px 20px rgba(102,179,255,.25);
     }
+
     .lock-title{
       margin:0;
       text-align:center;
@@ -251,7 +276,7 @@
             <div class="brand-badge">📝</div>
             <div>個人用メモ帳</div>
           </div>
-          <div class="muted" style="margin-top:6px">完全オフライン対応 / 端末内保存 / JSONバックアップ / ロック対応</div>
+          <div class="muted" style="margin-top:6px">完全オフライン対応 / 端末内保存 / JSONバックアップ / ロック対応 / AES暗号化</div>
         </div>
       </div>
 
@@ -336,6 +361,9 @@
     const AUTO_BACKUP_KEY = 'offline_private_memo_autobackup_v1';
     const AUTO_BACKUP_INTERVAL_MS = 60 * 1000;
 
+    const enc = new TextEncoder();
+    const dec = new TextDecoder();
+
     const els = {
       appRoot: document.getElementById('appRoot'),
       lockScreen: document.getElementById('lockScreen'),
@@ -374,6 +402,80 @@
     let previewMode = false;
     let autoBackupTimer = null;
     let isChangingPasscode = false;
+    let unlockedPasscode = '';
+
+    function bytesToBase64(bytes) {
+      let binary = '';
+      const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
+      return btoa(binary);
+    }
+
+    function base64ToBytes(base64) {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    async function deriveAesKeyFromPasscode(passcode, saltBytes) {
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        enc.encode(passcode),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+      );
+
+      return crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: saltBytes,
+          iterations: 250000,
+          hash: 'SHA-256'
+        },
+        keyMaterial,
+        {
+          name: 'AES-GCM',
+          length: 256
+        },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    async function encryptText(plainText, passcode) {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveAesKeyFromPasscode(passcode, salt);
+
+      const cipherBuffer = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        enc.encode(plainText)
+      );
+
+      return {
+        salt: bytesToBase64(salt),
+        iv: bytesToBase64(iv),
+        ciphertext: bytesToBase64(cipherBuffer)
+      };
+    }
+
+    async function decryptText(payload, passcode) {
+      const salt = base64ToBytes(payload.salt);
+      const iv = base64ToBytes(payload.iv);
+      const ciphertext = base64ToBytes(payload.ciphertext);
+      const key = await deriveAesKeyFromPasscode(passcode, salt);
+
+      const plainBuffer = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        ciphertext
+      );
+
+      return dec.decode(plainBuffer);
+    }
 
     function getSavedPasscode() {
       try { return localStorage.getItem(LOCK_KEY) || ''; } catch (err) { return ''; }
@@ -393,78 +495,106 @@
       els.lockPassConfirmInput.value = '';
       els.lockPassConfirmInput.classList.toggle('hide', hasPass && !isChangingPasscode);
       els.changePassBtn.classList.toggle('hide', !hasPass);
-      els.unlockBtn.textContent = hasPass ? (isChangingPasscode ? '新しいパスコードを保存' : 'ロック解除') : '初回設定して開始';
-      setLockMessage(hasPass ? (isChangingPasscode ? '新しいパスコードを2回入力してください。' : '設定済みのパスコードを入力してください。') : 'まだパスコード未設定です。初回パスコードを登録します。');
+      els.unlockBtn.textContent = hasPass
+        ? (isChangingPasscode ? '新しいパスコードを保存' : 'ロック解除')
+        : '初回設定して開始';
+      setLockMessage(
+        hasPass
+          ? (isChangingPasscode ? '新しいパスコードを2回入力してください。' : '設定済みのパスコードを入力してください。')
+          : 'まだパスコード未設定です。初回パスコードを登録します。'
+      );
     }
 
-    function openApp() {
-  els.lockScreen.style.display = 'none';
-  els.appRoot.classList.remove('hide');
-  els.appRoot.style.display = 'grid';
-  render();
+    async function openApp() {
+      els.lockScreen.style.display = 'none';
+      els.appRoot.classList.remove('hide');
+      els.appRoot.style.display = 'grid';
+      await decryptAllNotesAfterUnlock();
+      render();
     }
 
-    function handleUnlock() {
-  const saved = getSavedPasscode();
-  const pass = els.lockPassInput.value.trim();
-  const confirmPass = els.lockPassConfirmInput.value.trim();
+    async function handleUnlock() {
+      const saved = getSavedPasscode();
+      const pass = els.lockPassInput.value.trim();
+      const confirmPass = els.lockPassConfirmInput.value.trim();
 
-  if (!saved || isChangingPasscode) {
-    if (pass.length < 4) {
-      setLockMessage('パスコードは4文字以上で設定してください。');
-      return;
-    }
-    if (pass !== confirmPass) {
-      setLockMessage('確認用パスコードが一致しません。');
-      return;
-    }
+      if (!saved || isChangingPasscode) {
+        if (pass.length < 4) {
+          setLockMessage('パスコードは4文字以上で設定してください。');
+          return;
+        }
+        if (pass !== confirmPass) {
+          setLockMessage('確認用パスコードが一致しません。');
+          return;
+        }
 
-    savePasscode(pass);
-    isChangingPasscode = false;
-    setLockMessage('保存しました。開きます...');
-    openApp();
-    return;
-  }
+        savePasscode(pass);
+        unlockedPasscode = pass;
+        isChangingPasscode = false;
+        setLockMessage('保存しました。開きます...');
+        await openApp();
+        return;
+      }
 
-  if (pass !== saved) {
-    setLockMessage('パスコードが違います。');
-    return;
-  }
+      if (pass !== saved) {
+        setLockMessage('パスコードが違います。');
+        return;
+      }
 
-  setLockMessage('解除しました。開きます...');
-  openApp();
+      unlockedPasscode = pass;
+      setLockMessage('解除しました。開きます...');
+      await openApp();
     }
 
     function nowISO(){ return new Date().toISOString(); }
     function uid(){ return 'm_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
     function formatDate(iso){
       const d = new Date(iso);
       return !iso || Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('ja-JP');
     }
+
     function normalizeTags(raw){
-      return String(raw || '').split(',').map(v => v.trim()).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i);
+      return String(raw || '')
+        .split(',')
+        .map(v => v.trim())
+        .filter(Boolean)
+        .filter((v, i, arr) => arr.indexOf(v) === i);
     }
 
     function createBlankNote(){
       const now = nowISO();
-      return { id: uid(), title: '', content: '', tags: [], pinned: false, createdAt: now, updatedAt: now };
+      return {
+        id: uid(),
+        title: '',
+        content: '',
+        encryptedContent: null,
+        tags: [],
+        pinned: false,
+        createdAt: now,
+        updatedAt: now
+      };
     }
 
     function normalizeLoadedState(data){
       if(!data || !Array.isArray(data.notes)) throw new Error('形式が違います');
+
       const notes = data.notes.map(note => ({
         id: note.id || uid(),
         title: String(note.title || ''),
         content: String(note.content || ''),
+        encryptedContent: note.encryptedContent || null,
         tags: Array.isArray(note.tags) ? note.tags.filter(Boolean) : [],
         pinned: !!note.pinned,
         createdAt: note.createdAt || nowISO(),
         updatedAt: note.updatedAt || note.createdAt || nowISO()
       }));
+
       if(!notes.length){
         const first = createBlankNote();
         return { notes:[first], selectedId:first.id };
       }
+
       return {
         notes,
         selectedId: notes.some(n => n.id === data.selectedId) ? data.selectedId : notes[0].id
@@ -485,8 +615,41 @@
       }
     }
 
-    function persist(){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    async function encryptAllNotesBeforePersist() {
+      if (!unlockedPasscode) return;
+
+      for (const note of state.notes) {
+        const plain = note.content || '';
+        note.encryptedContent = await encryptText(plain, unlockedPasscode);
+      }
+    }
+
+    async function decryptAllNotesAfterUnlock() {
+      if (!unlockedPasscode) return;
+
+      for (const note of state.notes) {
+        if (note.encryptedContent) {
+          try {
+            note.content = await decryptText(note.encryptedContent, unlockedPasscode);
+          } catch (err) {
+            note.content = '';
+          }
+        }
+      }
+    }
+
+    async function persist(){
+      await encryptAllNotesBeforePersist();
+
+      const stateToSave = {
+        ...state,
+        notes: state.notes.map(note => ({
+          ...note,
+          content: ''
+        }))
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
       els.saveState.textContent = '状態: 保存済み';
     }
 
@@ -503,18 +666,38 @@
 
     function updateBackupChip(){
       const backup = loadAutoBackup();
-      els.backupState.textContent = backup?.savedAt ? 'バックアップ: ' + formatDate(backup.savedAt) : 'バックアップ: 未作成';
+      els.backupState.textContent = backup?.savedAt
+        ? 'バックアップ: ' + formatDate(backup.savedAt)
+        : 'バックアップ: 未作成';
     }
 
-    function saveAutoBackup(){
-      const payload = { savedAt: nowISO(), app: 'offline-private-memo', version: 1, state };
+    async function saveAutoBackup(){
+      await encryptAllNotesBeforePersist();
+
+      const backupState = {
+        ...state,
+        notes: state.notes.map(note => ({
+          ...note,
+          content: ''
+        }))
+      };
+
+      const payload = {
+        savedAt: nowISO(),
+        app: 'offline-private-memo',
+        version: 2,
+        state: backupState
+      };
+
       localStorage.setItem(AUTO_BACKUP_KEY, JSON.stringify(payload));
       updateBackupChip();
     }
 
     function scheduleAutoBackup(){
       clearInterval(autoBackupTimer);
-      autoBackupTimer = setInterval(() => saveAutoBackup(), AUTO_BACKUP_INTERVAL_MS);
+      autoBackupTimer = setInterval(() => {
+        saveAutoBackup().catch(() => {});
+      }, AUTO_BACKUP_INTERVAL_MS);
     }
 
     function downloadJson(filename, data){
@@ -530,7 +713,11 @@
     function queueSave(){
       els.saveState.textContent = '状態: 保存中...';
       clearTimeout(saveTimer);
-      saveTimer = setTimeout(persist, 250);
+      saveTimer = setTimeout(() => {
+        persist().catch(() => {
+          els.saveState.textContent = '状態: 保存失敗';
+        });
+      }, 250);
     }
 
     function getSelectedNote(){
@@ -573,13 +760,15 @@
     function rebuildTagFilter(){
       const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort((a,b)=>a.localeCompare(b,'ja'));
       const current = els.tagFilter.value;
-      els.tagFilter.innerHTML = '<option value="">すべてのタグ</option>' + allTags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+      els.tagFilter.innerHTML = '<option value="">すべてのタグ</option>' +
+        allTags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
       if(allTags.includes(current)) els.tagFilter.value = current;
     }
 
     function renderList(){
       const notes = filteredNotes();
       els.noteCount.textContent = notes.length + '件';
+
       if(!notes.length){
         els.noteList.innerHTML = '<div class="muted" style="padding:12px">該当するメモがありません</div>';
         return;
@@ -633,7 +822,11 @@
       render();
     }
 
-    els.unlockBtn.onclick = handleUnlock;
+    els.unlockBtn.onclick = () => {
+      handleUnlock().catch(() => {
+        setLockMessage('ロック解除に失敗しました。');
+      });
+    };
 
     els.changePassBtn.addEventListener('click', () => {
       const saved = getSavedPasscode();
@@ -644,8 +837,13 @@
       refreshLockUi();
     });
 
-    els.lockPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleUnlock(); });
-    els.lockPassConfirmInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleUnlock(); });
+    els.lockPassInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleUnlock().catch(() => setLockMessage('ロック解除に失敗しました。'));
+    });
+
+    els.lockPassConfirmInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleUnlock().catch(() => setLockMessage('ロック解除に失敗しました。'));
+    });
 
     els.newBtn.addEventListener('click', () => {
       const note = createBlankNote();
@@ -711,9 +909,17 @@
     els.searchInput.addEventListener('input', renderList);
     els.tagFilter.addEventListener('change', renderList);
 
-    els.exportBtn.addEventListener('click', () => {
+    els.exportBtn.addEventListener('click', async () => {
+      await encryptAllNotesBeforePersist();
+      const stateToExport = {
+        ...state,
+        notes: state.notes.map(note => ({
+          ...note,
+          content: ''
+        }))
+      };
       const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      downloadJson(`memo-backup-${stamp}.json`, state);
+      downloadJson(`memo-backup-${stamp}.json`, stateToExport);
     });
 
     els.exportAutoBackupBtn.addEventListener('click', () => {
@@ -730,13 +936,21 @@
         const text = await file.text();
         const data = JSON.parse(text);
         let nextState = null;
+
         if (data && Array.isArray(data.notes)) nextState = normalizeLoadedState(data);
         else if (data && data.state && Array.isArray(data.state.notes)) nextState = normalizeLoadedState(data.state);
         else throw new Error('形式が違います');
+
         if(!confirm('現在のメモを上書きして読み込みますか？')) return;
+
         state = nextState;
-        persist();
-        saveAutoBackup();
+
+        if (unlockedPasscode) {
+          await decryptAllNotesAfterUnlock();
+        }
+
+        await persist();
+        await saveAutoBackup();
         render();
         alert('読み込みました');
       }catch(err){
@@ -747,12 +961,12 @@
     });
 
     window.addEventListener('beforeunload', () => {
-      persist();
-      saveAutoBackup();
+      persist().catch(() => {});
+      saveAutoBackup().catch(() => {});
     });
 
     scheduleAutoBackup();
-    saveAutoBackup();
+    saveAutoBackup().catch(() => {});
     refreshLockUi();
     els.appRoot.style.display = 'none';
   </script>
