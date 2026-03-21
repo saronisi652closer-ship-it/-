@@ -435,10 +435,6 @@
   openApp();
     }
 
-      if (pass !== saved) return setLockMessage('パスコードが違います。');
-      openApp();
-    }
-
     function nowISO(){ return new Date().toISOString(); }
     function uid(){ return 'm_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
     function formatDate(iso){
