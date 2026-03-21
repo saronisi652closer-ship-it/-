@@ -514,7 +514,7 @@
       els.lockScreen.style.display = 'none';
       els.appRoot.classList.remove('hide');
       els.appRoot.style.display = 'grid';
-      await decryptAllNotesAfterUnlock();
+      await decryptAllNotesAfterUnlock(unlockedPasscode, true);
       render();
     }
 
@@ -618,17 +618,27 @@
       }
     }
 
-    async function decryptAllNotesAfterUnlock() {
-      if (!unlockedPasscode) return;
+    async function decryptAllNotesAfterUnlock(passcode = unlockedPasscode, showAlert = false) {
+      if (!passcode) return true;
+
+      let failedCount = 0;
+
       for (const note of state.notes) {
         if (note.encryptedContent) {
           try {
-            note.content = await decryptText(note.encryptedContent, unlockedPasscode);
+            note.content = await decryptText(note.encryptedContent, passcode);
           } catch (err) {
-            note.content = '';
+            failedCount++;
+            note.content = '[復号失敗: パスコードが違うか、バックアップ形式が異なります]';
           }
         }
       }
+
+      if (failedCount > 0 && showAlert) {
+        alert(`${failedCount}件のメモを復号できませんでした。バックアップ作成時と同じパスコードか確認してください。`);
+      }
+
+      return failedCount === 0;
     }
 
     async function persist(){
@@ -960,21 +970,53 @@
     els.importInput.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if(!file) return;
+
       try{
         const text = await file.text();
         const data = JSON.parse(text);
         let nextState = null;
-        if (data && Array.isArray(data.notes)) nextState = normalizeLoadedState(data);
-        else if (data && data.state && Array.isArray(data.state.notes)) nextState = normalizeLoadedState(data.state);
-        else throw new Error('形式が違います');
+
+        if (data && Array.isArray(data.notes)) {
+          nextState = normalizeLoadedState(data);
+        } else if (data && data.state && Array.isArray(data.state.notes)) {
+          nextState = normalizeLoadedState(data.state);
+        } else {
+          throw new Error('形式が違います');
+        }
+
         if(!confirm('現在のメモを上書きして読み込みますか？')) return;
+
         state = nextState;
-        if (unlockedPasscode) await decryptAllNotesAfterUnlock();
+
+        const hasEncryptedNotes = state.notes.some(note => note.encryptedContent);
+
+        if (hasEncryptedNotes) {
+          let importPasscode = unlockedPasscode;
+
+          if (!importPasscode) {
+            importPasscode = prompt('このバックアップを作成したときのパスコードを入力してください');
+          } else {
+            const useCurrent = confirm('現在のパスコードで復号しますか？\n違う場合は「キャンセル」で別のパスコードを入力します。');
+            if (!useCurrent) {
+              importPasscode = prompt('バックアップ作成時のパスコードを入力してください');
+            }
+          }
+
+          if (!importPasscode) {
+            alert('復号用パスコードが未入力のため、本文は復元されませんでした。');
+          } else {
+            const decryptOk = await decryptAllNotesAfterUnlock(importPasscode, true);
+            if (decryptOk) {
+              unlockedPasscode = importPasscode;
+            }
+          }
+        }
+
         await persist();
         await saveAutoBackup();
         render();
         alert('読み込みました');
-      }catch(err){
+      } catch(err) {
         alert('読み込みに失敗しました。JSONファイルを確認してください。');
       } finally {
         e.target.value = '';
