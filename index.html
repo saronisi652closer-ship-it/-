@@ -1,10 +1,15 @@
 <!doctype html>
-
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>オフライン個人メモ帳</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b0f14">
+  <link rel="icon" href="icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
   <style>
     :root{
       --bg:#0b0f14;
@@ -19,189 +24,262 @@
       --ok:#7bd88f;
       --shadow:0 10px 30px rgba(0,0,0,.28);
       --radius:18px;
-    }*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  background:linear-gradient(180deg,#091018 0%, #0d141d 100%);
-  color:var(--text);
-}
+    }
 
-.app{
-  min-height:100%;
-  display:grid;
-  grid-template-columns:320px 1fr;
-}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:linear-gradient(180deg,#091018 0%, #0d141d 100%);
+      color:var(--text);
+    }
 
-.sidebar{
-  border-right:1px solid var(--line);
-  background:rgba(12,17,24,.88);
-  backdrop-filter:blur(10px);
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
+    .app{
+      min-height:100%;
+      display:grid;
+      grid-template-columns:320px 1fr;
+    }
 
-.main{
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  min-width:0;
-}
+    .sidebar{
+      border-right:1px solid var(--line);
+      background:rgba(12,17,24,.88);
+      backdrop-filter:blur(10px);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
 
-.card{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-}
+    .main{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-width:0;
+    }
 
-.topbar{
-  padding:12px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:space-between;
-}
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
 
-.brand{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  font-weight:700;
-  letter-spacing:.02em;
-}
+    .topbar{
+      padding:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
 
-.brand-badge{
-  width:38px;height:38px;border-radius:12px;
-  display:grid;place-items:center;
-  background:linear-gradient(135deg,#65b7ff,#8c7cff);
-  color:white;font-size:18px;
-  box-shadow:0 8px 20px rgba(102,179,255,.25);
-}
+    .brand{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      font-weight:700;
+      letter-spacing:.02em;
+    }
 
-.muted{color:var(--muted);font-size:13px}
+    .brand-badge{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,#65b7ff,#8c7cff);
+      color:white;
+      font-size:18px;
+      box-shadow:0 8px 20px rgba(102,179,255,.25);
+    }
 
-.actions,.toolbar{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-}
+    .muted{color:var(--muted);font-size:13px}
 
-button,.btn,label.file-btn{
-  border:none;
-  border-radius:14px;
-  padding:11px 14px;
-  background:var(--panel-2);
-  color:var(--text);
-  font:inherit;
-  cursor:pointer;
-  border:1px solid var(--line);
-  transition:.18s ease;
-}
-button:hover,.btn:hover,label.file-btn:hover{transform:translateY(-1px);border-color:#35506d}
-button.primary{background:linear-gradient(135deg,#4da7ff,#7a78ff);border:none}
-button.danger{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.4);color:#ffd4d4}
-button.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)}
-button.ghost{background:transparent}
+    .actions,.toolbar{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
 
-input,textarea,select{
-  width:100%;
-  border-radius:14px;
-  border:1px solid var(--line);
-  background:#0f151d;
-  color:var(--text);
-  font:inherit;
-  outline:none;
-  padding:12px 14px;
-}
-input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(102,179,255,.12)}
+    button,.btn,label.file-btn{
+      border:none;
+      border-radius:14px;
+      padding:11px 14px;
+      background:var(--panel-2);
+      color:var(--text);
+      font:inherit;
+      cursor:pointer;
+      border:1px solid var(--line);
+      transition:.18s ease;
+    }
 
-textarea{
-  min-height:52vh;
-  resize:vertical;
-  line-height:1.65;
-}
+    button:hover,.btn:hover,label.file-btn:hover{
+      transform:translateY(-1px);
+      border-color:#35506d;
+    }
 
-.search-wrap{padding:12px}
-.note-list{
-  padding:0 8px 8px;
-  overflow:auto;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
+    button.primary{background:linear-gradient(135deg,#4da7ff,#7a78ff);border:none}
+    button.danger{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.4);color:#ffd4d4}
+    button.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)}
+    button.ghost{background:transparent}
 
-.note-item{
-  padding:12px;
-  border-radius:16px;
-  border:1px solid transparent;
-  background:transparent;
-  cursor:pointer;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-.note-item:hover{background:#111925;border-color:#223140}
-.note-item.active{background:#152231;border-color:#35506d}
+    input,textarea,select{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:#0f151d;
+      color:var(--text);
+      font:inherit;
+      outline:none;
+      padding:12px 14px;
+    }
 
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.grow{flex:1 1 260px}
-.w-200{width:200px;max-width:100%}
+    input:focus,textarea:focus,select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(102,179,255,.12);
+    }
 
-.editor{
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  min-height:0;
-}
+    textarea{
+      min-height:52vh;
+      resize:vertical;
+      line-height:1.65;
+    }
 
-.chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{
-  display:inline-flex;align-items:center;gap:6px;
-  border:1px solid var(--line);
-  background:#101821;
-  color:var(--muted);
-  padding:6px 10px;border-radius:999px;font-size:12px;
-}
+    .search-wrap{padding:12px}
 
-.empty{
-  min-height:50vh;
-  display:grid;
-  place-items:center;
-  text-align:center;
-  padding:30px;
-}
+    .note-list{
+      padding:0 8px 8px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
 
-.preview{
-  white-space:pre-wrap;
-  line-height:1.7;
-  background:#0e141c;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:16px;
-  min-height:180px;
-}
+    .note-item{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid transparent;
+      background:transparent;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
 
-.footer-note{font-size:12px;color:var(--muted);padding:0 4px}
-.hide{display:none !important}
+    .note-item:hover{background:#111925;border-color:#223140}
+    .note-item.active{background:#152231;border-color:#35506d}
 
-@media (max-width: 900px){
-  .app{grid-template-columns:1fr}
-  .sidebar{border-right:none;border-bottom:1px solid var(--line)}
-  textarea{min-height:38vh}
-}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .grow{flex:1 1 260px}
+    .w-200{width:200px;max-width:100%}
 
+    .editor{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+    }
+
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--line);
+      background:#101821;
+      color:var(--muted);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+    }
+
+    .empty{
+      min-height:50vh;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      padding:30px;
+    }
+
+    .preview{
+      white-space:pre-wrap;
+      line-height:1.7;
+      background:#0e141c;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      min-height:180px;
+    }
+
+    .footer-note{font-size:12px;color:var(--muted);padding:0 4px}
+    .hide{display:none !important}
+
+    .lock-screen{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:20px;
+      background:linear-gradient(180deg,#091018 0%, #0d141d 100%);
+    }
+
+    .lock-card{
+      width:min(100%, 420px);
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:22px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .lock-icon{
+      width:64px;
+      height:64px;
+      border-radius:18px;
+      display:grid;
+      place-items:center;
+      margin:0 auto;
+      font-size:28px;
+      background:linear-gradient(135deg,#4da7ff,#7a78ff);
+      box-shadow:0 8px 20px rgba(102,179,255,.25);
+    }
+
+    .lock-title{
+      margin:0;
+      text-align:center;
+      font-size:24px;
+    }
+
+    @media (max-width: 900px){
+      .app{grid-template-columns:1fr}
+      .sidebar{border-right:none;border-bottom:1px solid var(--line)}
+      textarea{min-height:38vh}
+    }
   </style>
 </head>
 <body>
-  <div class="app">
+  <div id="lockScreen" class="lock-screen">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <h1 class="lock-title">メモ帳をロック解除</h1>
+      <div class="muted" style="text-align:center">初回は4文字以上のパスコードを設定します。以降は同じ端末で入力して開けます。</div>
+      <input id="lockPassInput" type="password" autocomplete="off" placeholder="パスコード">
+      <input id="lockPassConfirmInput" type="password" autocomplete="off" placeholder="確認用パスコード">
+      <div class="actions" style="justify-content:center">
+        <button id="unlockBtn" class="primary">開始 / ロック解除</button>
+        <button id="changePassBtn" class="ghost hide">パスコード変更</button>
+      </div>
+      <div id="lockMessage" class="muted" style="text-align:center"></div>
+    </div>
+  </div>
+
+  <div class="app hide" id="appRoot">
     <aside class="sidebar">
       <div class="card topbar">
         <div>
@@ -209,88 +287,106 @@ textarea{
             <div class="brand-badge">📝</div>
             <div>個人用メモ帳</div>
           </div>
-          <div class="muted" style="margin-top:6px">完全オフライン対応 / 端末内保存 / JSONバックアップ</div>
+          <div class="muted" style="margin-top:6px">完全オフライン対応 / 端末内保存 / JSONバックアップ / PWA</div>
         </div>
-      </div><div class="card search-wrap">
-    <div class="row">
-      <div class="grow"><input id="searchInput" placeholder="検索（タイトル / 本文 / タグ）"></div>
-      <div class="w-200">
-        <select id="tagFilter">
-          <option value="">すべてのタグ</option>
-        </select>
       </div>
-    </div>
-    <div class="actions" style="margin-top:10px">
-      <button id="newBtn" class="primary">＋ 新規メモ</button>
-      <button id="duplicateBtn">複製</button>
-    </div>
+
+      <div class="card search-wrap">
+        <div class="row">
+          <div class="grow">
+            <input id="searchInput" placeholder="検索（タイトル / 本文 / タグ）">
+          </div>
+          <div class="w-200">
+            <select id="tagFilter">
+              <option value="">すべてのタグ</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:10px">
+          <button id="newBtn" class="primary">＋ 新規メモ</button>
+          <button id="duplicateBtn">複製</button>
+        </div>
+      </div>
+
+      <div class="card" style="display:flex;flex-direction:column;min-height:280px;max-height:52vh">
+        <div class="topbar" style="padding-bottom:8px">
+          <strong>メモ一覧</strong>
+          <span class="muted" id="noteCount">0件</span>
+        </div>
+        <div id="noteList" class="note-list"></div>
+      </div>
+
+      <div class="card topbar">
+        <div class="toolbar">
+          <button id="exportBtn">書き出し</button>
+          <button id="exportAutoBackupBtn">自動バックアップ出力</button>
+          <label class="file-btn" for="importInput">読み込み</label>
+          <input id="importInput" type="file" accept="application/json" class="hide">
+        </div>
+        <div class="footer-note">通常バックアップと自動バックアップの両方を読み込めます。</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="card editor" id="editorCard">
+        <div class="row">
+          <div class="grow">
+            <input id="titleInput" placeholder="タイトル">
+          </div>
+          <div class="w-200">
+            <input id="tagsInput" placeholder="タグ 例: 日記,ゲーム,買い物">
+          </div>
+        </div>
+
+        <div class="chips">
+          <div class="chip">自動保存</div>
+          <div class="chip">自動バックアップ: 60秒ごと</div>
+          <div class="chip" id="createdChip">作成: -</div>
+          <div class="chip" id="updatedChip">更新: -</div>
+          <div class="chip" id="saveState">状態: 保存済み</div>
+          <div class="chip" id="backupState">バックアップ: 未作成</div>
+        </div>
+
+        <textarea id="contentInput" placeholder="ここにメモを書く"></textarea>
+
+        <div class="row">
+          <div class="actions grow">
+            <button id="pinBtn" class="warn">☆ ピン留め</button>
+            <button id="deleteBtn" class="danger">削除</button>
+            <button id="clearBtn" class="ghost">入力クリア</button>
+          </div>
+          <div class="actions">
+            <button id="previewToggleBtn">プレビュー切替</button>
+          </div>
+        </div>
+
+        <div id="previewBox" class="preview hide"></div>
+      </section>
+
+      <section class="card empty hide" id="emptyState">
+        <div>
+          <h2 style="margin:0 0 8px">メモを作成しよう</h2>
+          <div class="muted">「＋ 新規メモ」で追加できます。保存は自動です。</div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <div class="card" style="display:flex;flex-direction:column;min-height:280px;max-height:52vh">
-    <div class="topbar" style="padding-bottom:8px">
-      <strong>メモ一覧</strong>
-      <span class="muted" id="noteCount">0件</span>
-    </div>
-    <div id="noteList" class="note-list"></div>
-  </div>
-
-  <div class="card topbar">
-    <div class="toolbar">
-      <button id="exportBtn">書き出し</button>
-      <button id="exportAutoBackupBtn">自動バックアップ出力</button>
-      <label class="file-btn" for="importInput">読み込み</label>
-      <input id="importInput" type="file" accept="application/json" class="hide">
-    </div>
-    <div class="footer-note">自動バックアップは端末内に保持。必要なときは「自動バックアップ出力」でJSON保存できます。</div>
-  </div>
-</aside>
-
-<main class="main">
-  <section class="card editor" id="editorCard">
-    <div class="row">
-      <div class="grow"><input id="titleInput" placeholder="タイトル"></div>
-      <div class="w-200"><input id="tagsInput" placeholder="タグ 例: 日記,ゲーム,買い物"></div>
-    </div>
-
-    <div class="chips">
-      <div class="chip">自動保存</div>
-      <div class="chip">自動バックアップ: 60秒ごと</div>
-      <div class="chip" id="createdChip">作成: -</div>
-      <div class="chip" id="updatedChip">更新: -</div>
-      <div class="chip" id="saveState">状態: 保存済み</div>
-      <div class="chip" id="backupState">バックアップ: 未作成</div>
-    </div>
-
-    <textarea id="contentInput" placeholder="ここにメモを書く"></textarea>
-
-    <div class="row">
-      <div class="actions grow">
-        <button id="pinBtn" class="warn">☆ ピン留め</button>
-        <button id="deleteBtn" class="danger">削除</button>
-        <button id="clearBtn" class="ghost">入力クリア</button>
-      </div>
-      <div class="actions">
-        <button id="previewToggleBtn">プレビュー切替</button>
-      </div>
-    </div>
-
-    <div id="previewBox" class="preview hide"></div>
-  </section>
-
-  <section class="card empty hide" id="emptyState">
-    <div>
-      <h2 style="margin:0 0 8px">メモを作成しよう</h2>
-      <div class="muted">「＋ 新規メモ」で追加できます。保存は自動です。</div>
-    </div>
-  </section>
-</main>
-
-  </div>  <script>
+  <script>
     const STORAGE_KEY = 'offline_private_memo_v1';
+    const LOCK_KEY = 'offline_private_memo_lock_v1';
     const AUTO_BACKUP_KEY = 'offline_private_memo_autobackup_v1';
     const AUTO_BACKUP_INTERVAL_MS = 60 * 1000;
 
     const els = {
+      appRoot: document.getElementById('appRoot'),
+      lockScreen: document.getElementById('lockScreen'),
+      lockPassInput: document.getElementById('lockPassInput'),
+      lockPassConfirmInput: document.getElementById('lockPassConfirmInput'),
+      unlockBtn: document.getElementById('unlockBtn'),
+      changePassBtn: document.getElementById('changePassBtn'),
+      lockMessage: document.getElementById('lockMessage'),
+
       searchInput: document.getElementById('searchInput'),
       tagFilter: document.getElementById('tagFilter'),
       noteList: document.getElementById('noteList'),
@@ -320,23 +416,90 @@ textarea{
     let saveTimer = null;
     let previewMode = false;
     let autoBackupTimer = null;
+    let isChangingPasscode = false;
 
-    function nowISO(){
+    function getSavedPasscode() {
+      try {
+        return localStorage.getItem(LOCK_KEY) || '';
+      } catch (err) {
+        return '';
+      }
+    }
+
+    function savePasscode(pass) {
+      localStorage.setItem(LOCK_KEY, pass);
+    }
+
+    function setLockMessage(msg) {
+      els.lockMessage.textContent = msg || '';
+    }
+
+    function refreshLockUi() {
+      const hasPass = !!getSavedPasscode();
+      els.lockPassInput.value = '';
+      els.lockPassConfirmInput.value = '';
+      els.lockPassConfirmInput.classList.toggle('hide', hasPass && !isChangingPasscode);
+      els.changePassBtn.classList.toggle('hide', !hasPass);
+      els.unlockBtn.textContent = hasPass
+        ? (isChangingPasscode ? '新しいパスコードを保存' : 'ロック解除')
+        : '初回設定して開始';
+      setLockMessage(
+        hasPass
+          ? (isChangingPasscode ? '新しいパスコードを2回入力してください。' : '設定済みのパスコードを入力してください。')
+          : 'まだパスコード未設定です。初回パスコードを登録します。'
+      );
+    }
+
+    function openApp() {
+      els.lockScreen.classList.add('hide');
+      els.appRoot.classList.remove('hide');
+      render();
+    }
+
+    function handleUnlock() {
+      const saved = getSavedPasscode();
+      const pass = els.lockPassInput.value.trim();
+      const confirmPass = els.lockPassConfirmInput.value.trim();
+
+      if (!saved || isChangingPasscode) {
+        if (pass.length < 4) {
+          setLockMessage('パスコードは4文字以上で設定してください。');
+          return;
+        }
+        if (pass !== confirmPass) {
+          setLockMessage('確認用パスコードが一致しません。');
+          return;
+        }
+        savePasscode(pass);
+        isChangingPasscode = false;
+        openApp();
+        return;
+      }
+
+      if (pass !== saved) {
+        setLockMessage('パスコードが違います。');
+        return;
+      }
+
+      openApp();
+    }
+
+    function nowISO() {
       return new Date().toISOString();
     }
 
-    function uid(){
+    function uid() {
       return 'm_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
     }
 
-    function formatDate(iso){
-      if(!iso) return '-';
+    function formatDate(iso) {
+      if (!iso) return '-';
       const d = new Date(iso);
-      if(Number.isNaN(d.getTime())) return '-';
+      if (Number.isNaN(d.getTime())) return '-';
       return d.toLocaleString('ja-JP');
     }
 
-    function normalizeTags(raw){
+    function normalizeTags(raw) {
       return String(raw || '')
         .split(',')
         .map(v => v.trim())
@@ -344,7 +507,7 @@ textarea{
         .filter((v, i, arr) => arr.indexOf(v) === i);
     }
 
-    function createBlankNote(){
+    function createBlankNote() {
       const now = nowISO();
       return {
         id: uid(),
@@ -357,54 +520,70 @@ textarea{
       };
     }
 
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw){
-          const first = createBlankNote();
-          return { notes:[first], selectedId:first.id };
-        }
-        const data = JSON.parse(raw);
-        if(!data || !Array.isArray(data.notes)) throw new Error('broken');
-        if(!data.notes.length){
-          const first = createBlankNote();
-          return { notes:[first], selectedId:first.id };
-        }
-        return {
-          notes: data.notes,
-          selectedId: data.selectedId || data.notes[0].id
-        };
-      }catch(err){
+    function normalizeLoadedState(data) {
+      if (!data || !Array.isArray(data.notes)) throw new Error('形式が違います');
+
+      const notes = data.notes.map(note => ({
+        id: note.id || uid(),
+        title: String(note.title || ''),
+        content: String(note.content || ''),
+        tags: Array.isArray(note.tags) ? note.tags.filter(Boolean) : [],
+        pinned: !!note.pinned,
+        createdAt: note.createdAt || nowISO(),
+        updatedAt: note.updatedAt || note.createdAt || nowISO()
+      }));
+
+      if (!notes.length) {
         const first = createBlankNote();
-        return { notes:[first], selectedId:first.id };
+        return { notes: [first], selectedId: first.id };
+      }
+
+      const selectedId = notes.some(n => n.id === data.selectedId)
+        ? data.selectedId
+        : notes[0].id;
+
+      return { notes, selectedId };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          const first = createBlankNote();
+          return { notes: [first], selectedId: first.id };
+        }
+        return normalizeLoadedState(JSON.parse(raw));
+      } catch (err) {
+        const first = createBlankNote();
+        return { notes: [first], selectedId: first.id };
       }
     }
 
-    function persist(){
+    function persist() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       els.saveState.textContent = '状態: 保存済み';
     }
 
-    function loadAutoBackup(){
-      try{
+    function loadAutoBackup() {
+      try {
         const raw = localStorage.getItem(AUTO_BACKUP_KEY);
-        if(!raw) return null;
+        if (!raw) return null;
         const data = JSON.parse(raw);
-        if(!data || !data.state || !Array.isArray(data.state.notes)) return null;
+        if (!data || !data.state || !Array.isArray(data.state.notes)) return null;
         return data;
-      }catch(err){
+      } catch (err) {
         return null;
       }
     }
 
-    function updateBackupChip(){
+    function updateBackupChip() {
       const backup = loadAutoBackup();
       els.backupState.textContent = backup?.savedAt
         ? 'バックアップ: ' + formatDate(backup.savedAt)
         : 'バックアップ: 未作成';
     }
 
-    function saveAutoBackup(){
+    function saveAutoBackup() {
       const payload = {
         savedAt: nowISO(),
         app: 'offline-private-memo',
@@ -415,14 +594,14 @@ textarea{
       updateBackupChip();
     }
 
-    function scheduleAutoBackup(){
+    function scheduleAutoBackup() {
       clearInterval(autoBackupTimer);
       autoBackupTimer = setInterval(() => {
         saveAutoBackup();
       }, AUTO_BACKUP_INTERVAL_MS);
     }
 
-    function downloadJson(filename, data){
+    function downloadJson(filename, data) {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -432,35 +611,35 @@ textarea{
       URL.revokeObjectURL(url);
     }
 
-    function queueSave(){
+    function queueSave() {
       els.saveState.textContent = '状態: 保存中...';
       clearTimeout(saveTimer);
       saveTimer = setTimeout(persist, 250);
     }
 
-    function getSelectedNote(){
+    function getSelectedNote() {
       return state.notes.find(n => n.id === state.selectedId) || null;
     }
 
-    function sortedNotes(notes){
-      return [...notes].sort((a,b) => {
+    function sortedNotes(notes) {
+      return [...notes].sort((a, b) => {
         if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
         return new Date(b.updatedAt) - new Date(a.updatedAt);
       });
     }
 
-    function filteredNotes(){
+    function filteredNotes() {
       const q = els.searchInput.value.trim().toLowerCase();
       const tag = els.tagFilter.value;
       return sortedNotes(state.notes).filter(n => {
-        const hay = [n.title, n.content, (n.tags||[]).join(' ')].join(' ').toLowerCase();
+        const hay = [n.title, n.content, (n.tags || []).join(' ')].join(' ').toLowerCase();
         const matchesQ = !q || hay.includes(q);
         const matchesTag = !tag || (n.tags || []).includes(tag);
         return matchesQ && matchesTag;
       });
     }
 
-    function escapeHtml(s){
+    function escapeHtml(s) {
       return String(s)
         .replace(/&/g,'&amp;')
         .replace(/</g,'&lt;')
@@ -469,7 +648,7 @@ textarea{
         .replace(/'/g,'&#39;');
     }
 
-    function renderPreview(text){
+    function renderPreview(text) {
       return escapeHtml(text)
         .replace(/^### (.*)$/gm,'<h3>$1</h3>')
         .replace(/^## (.*)$/gm,'<h2>$1</h2>')
@@ -480,30 +659,36 @@ textarea{
         .replace(/\n/g,'<br>');
     }
 
-    function rebuildTagFilter(){
-      const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort((a,b)=>a.localeCompare(b,'ja'));
+    function rebuildTagFilter() {
+      const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))]
+        .sort((a, b) => a.localeCompare(b, 'ja'));
+
       const current = els.tagFilter.value;
-      els.tagFilter.innerHTML = '<option value="">すべてのタグ</option>' +
+      els.tagFilter.innerHTML =
+        '<option value="">すべてのタグ</option>' +
         allTags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-      if(allTags.includes(current)) els.tagFilter.value = current;
+
+      if (allTags.includes(current)) els.tagFilter.value = current;
     }
 
-    function renderList(){
+    function renderList() {
       const notes = filteredNotes();
       els.noteCount.textContent = notes.length + '件';
-      if(!notes.length){
+
+      if (!notes.length) {
         els.noteList.innerHTML = '<div class="muted" style="padding:12px">該当するメモがありません</div>';
         return;
       }
+
       els.noteList.innerHTML = notes.map(note => {
         const title = note.title?.trim() || '無題メモ';
         const snippet = (note.content || '').replace(/\n+/g, ' ').trim().slice(0, 52) || '本文なし';
-        const tags = (note.tags || []).slice(0,3).map(t => `#${escapeHtml(t)}`).join(' ');
+        const tags = (note.tags || []).slice(0, 3).map(t => `#${escapeHtml(t)}`).join(' ');
         return `
           <button class="note-item ${note.id === state.selectedId ? 'active' : ''}" data-id="${note.id}">
             <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
               <strong style="text-align:left">${note.pinned ? '⭐ ' : ''}${escapeHtml(title)}</strong>
-              <span class="muted">${formatDate(note.updatedAt).slice(0,16)}</span>
+              <span class="muted">${formatDate(note.updatedAt).slice(0, 16)}</span>
             </div>
             <div class="muted" style="text-align:left">${escapeHtml(snippet)}</div>
             ${tags ? `<div class="muted" style="text-align:left">${tags}</div>` : ''}
@@ -519,12 +704,14 @@ textarea{
       });
     }
 
-    function renderEditor(){
+    function renderEditor() {
       const note = getSelectedNote();
       const hasNote = !!note;
+
       els.editorCard.classList.toggle('hide', !hasNote);
       els.emptyState.classList.toggle('hide', hasNote);
-      if(!note) return;
+
+      if (!note) return;
 
       els.titleInput.value = note.title || '';
       els.tagsInput.value = (note.tags || []).join(', ');
@@ -537,24 +724,50 @@ textarea{
       els.contentInput.classList.toggle('hide', previewMode);
     }
 
-    function render(){
+    function render() {
       rebuildTagFilter();
       renderList();
       renderEditor();
       updateBackupChip();
     }
 
-    function updateSelectedNote(patch){
+    function updateSelectedNote(patch) {
       const idx = state.notes.findIndex(n => n.id === state.selectedId);
-      if(idx < 0) return;
+      if (idx < 0) return;
+
       state.notes[idx] = {
         ...state.notes[idx],
         ...patch,
         updatedAt: nowISO()
       };
+
       queueSave();
       render();
     }
+
+    els.unlockBtn.addEventListener('click', () => {
+      handleUnlock();
+    });
+
+    els.changePassBtn.addEventListener('click', () => {
+      const saved = getSavedPasscode();
+      const current = prompt('現在のパスコードを入力');
+      if (current === null) return;
+      if (current !== saved) {
+        setLockMessage('現在のパスコードが違います。');
+        return;
+      }
+      isChangingPasscode = true;
+      refreshLockUi();
+    });
+
+    els.lockPassInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleUnlock();
+    });
+
+    els.lockPassConfirmInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleUnlock();
+    });
 
     els.newBtn.addEventListener('click', () => {
       const note = createBlankNote();
@@ -567,15 +780,21 @@ textarea{
 
     els.duplicateBtn.addEventListener('click', () => {
       const current = getSelectedNote();
-      if(!current) return;
+      if (!current) return;
+
+      const cloneSource = typeof structuredClone === 'function'
+        ? structuredClone(current)
+        : JSON.parse(JSON.stringify(current));
+
       const copy = {
-        ...structuredClone(current),
+        ...cloneSource,
         id: uid(),
         title: (current.title || '無題メモ') + '（コピー）',
         pinned: false,
         createdAt: nowISO(),
         updatedAt: nowISO()
       };
+
       state.notes.unshift(copy);
       state.selectedId = copy.id;
       queueSave();
@@ -584,30 +803,34 @@ textarea{
 
     els.deleteBtn.addEventListener('click', () => {
       const current = getSelectedNote();
-      if(!current) return;
+      if (!current) return;
+
       const ok = confirm('このメモを削除しますか？');
-      if(!ok) return;
+      if (!ok) return;
+
       state.notes = state.notes.filter(n => n.id !== current.id);
-      if(!state.notes.length){
+
+      if (!state.notes.length) {
         const first = createBlankNote();
         state.notes = [first];
         state.selectedId = first.id;
-      }else{
+      } else {
         state.selectedId = state.notes[0].id;
       }
+
       queueSave();
       render();
     });
 
     els.clearBtn.addEventListener('click', () => {
       const ok = confirm('入力中のタイトル・本文を空にしますか？');
-      if(!ok) return;
+      if (!ok) return;
       updateSelectedNote({ title:'', content:'', tags:[] });
     });
 
     els.pinBtn.addEventListener('click', () => {
       const current = getSelectedNote();
-      if(!current) return;
+      if (!current) return;
       updateSelectedNote({ pinned: !current.pinned });
     });
 
@@ -632,37 +855,45 @@ textarea{
     els.tagFilter.addEventListener('change', renderList);
 
     els.exportBtn.addEventListener('click', () => {
-      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
       downloadJson(`memo-backup-${stamp}.json`, state);
     });
 
     els.exportAutoBackupBtn.addEventListener('click', () => {
       const backup = loadAutoBackup();
-      if(!backup){
+      if (!backup) {
         alert('まだ自動バックアップがありません。1分ほど使うか、画面を操作してから試してください。');
         return;
       }
-      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
       downloadJson(`memo-autobackup-${stamp}.json`, backup);
     });
 
     els.importInput.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
-      if(!file) return;
-      try{
+      if (!file) return;
+
+      try {
         const text = await file.text();
         const data = JSON.parse(text);
-        if(!data || !Array.isArray(data.notes)) throw new Error('形式が違います');
-        if(!confirm('現在のメモを上書きして読み込みますか？')) return;
-        state = data;
-        if(!state.notes.length){
-          const first = createBlankNote();
-          state = { notes:[first], selectedId:first.id };
+
+        let nextState = null;
+        if (data && Array.isArray(data.notes)) {
+          nextState = normalizeLoadedState(data);
+        } else if (data && data.state && Array.isArray(data.state.notes)) {
+          nextState = normalizeLoadedState(data.state);
+        } else {
+          throw new Error('形式が違います');
         }
+
+        if (!confirm('現在のメモを上書きして読み込みますか？')) return;
+
+        state = nextState;
         persist();
+        saveAutoBackup();
         render();
         alert('読み込みました');
-      }catch(err){
+      } catch (err) {
         alert('読み込みに失敗しました。JSONファイルを確認してください。');
       } finally {
         e.target.value = '';
@@ -676,6 +907,20 @@ textarea{
 
     scheduleAutoBackup();
     saveAutoBackup();
-    render();
-  </script></body>
+    refreshLockUi();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          await navigator.serviceWorker.register('./sw.js');
+          console.log('Service Worker登録OK');
+        } catch (err) {
+          console.error('Service Worker登録失敗', err);
+        }
+      });
+    }
+  </script>
+</body>
 </html>
