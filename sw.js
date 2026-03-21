@@ -1,4 +1,4 @@
-const CACHE_NAME = 'offline-private-memo-pwa-v1';
+const CACHE_NAME = 'offline-private-memo-pwa-v2';
 const ASSETS = [
   './',
   './index.html',
