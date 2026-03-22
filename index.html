@@ -1,1204 +1,190 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>オフライン個人メモ帳</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>個人メモ帳 完全版</title>
 
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0b0f14">
-  <link rel="icon" href="icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="icon-192.png">
-
-  <style>
-    :root{
-      --bg:#0b0f14;
-      --panel:#121821;
-      --panel-2:#18212c;
-      --text:#eaf1f8;
-      --muted:#9fb0c3;
-      --line:#263241;
-      --accent:#66b3ff;
-      --danger:#ff6b6b;
-      --warn:#ffd166;
-      --ok:#7bd88f;
-      --shadow:0 10px 30px rgba(0,0,0,.28);
-      --radius:18px;
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:linear-gradient(180deg,#091018 0%, #0d141d 100%);
-      color:var(--text);
-    }
-
-    .app{
-      min-height:100%;
-      display:grid;
-      grid-template-columns:320px 1fr;
-    }
-
-    .sidebar{
-      border-right:1px solid var(--line);
-      background:rgba(12,17,24,.88);
-      backdrop-filter:blur(10px);
-      padding:14px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .main{
-      padding:14px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      min-width:0;
-    }
-
-    .card{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-    }
-
-    .topbar{
-      padding:12px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .brand{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      font-weight:700;
-      letter-spacing:.02em;
-    }
-
-    .brand-badge{
-      width:38px;height:38px;border-radius:12px;
-      display:grid;place-items:center;
-      background:linear-gradient(135deg,#65b7ff,#8c7cff);
-      color:white;font-size:18px;
-      box-shadow:0 8px 20px rgba(102,179,255,.25);
-    }
-
-    .muted{color:var(--muted);font-size:13px}
-
-    .actions,.toolbar{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    button,.btn,label.file-btn{
-      border:none;
-      border-radius:14px;
-      padding:11px 14px;
-      background:var(--panel-2);
-      color:var(--text);
-      font:inherit;
-      cursor:pointer;
-      border:1px solid var(--line);
-      transition:.18s ease;
-    }
-
-    button:hover,.btn:hover,label.file-btn:hover{transform:translateY(-1px);border-color:#35506d}
-    button.primary{background:linear-gradient(135deg,#4da7ff,#7a78ff);border:none}
-    button.danger{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.4);color:#ffd4d4}
-    button.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.35)}
-    button.ghost{background:transparent}
-
-    input,textarea,select{
-      width:100%;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:#0f151d;
-      color:var(--text);
-      font:inherit;
-      outline:none;
-      padding:12px 14px;
-    }
-
-    input:focus,textarea:focus,select:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 0 3px rgba(102,179,255,.12);
-    }
-
-    textarea{
-      min-height:52vh;
-      resize:vertical;
-      line-height:1.65;
-    }
-
-    .search-wrap{padding:12px}
-
-    .note-list{
-      padding:0 8px 8px;
-      overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    .note-item{
-      padding:12px;
-      border-radius:16px;
-      border:1px solid transparent;
-      background:transparent;
-      cursor:pointer;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-
-    .note-item:hover{background:#111925;border-color:#223140}
-    .note-item.active{background:#152231;border-color:#35506d}
-
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .grow{flex:1 1 260px}
-    .w-200{width:200px;max-width:100%}
-    .w-160{width:160px;max-width:100%}
-
-    .editor{
-      padding:12px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      min-height:0;
-    }
-
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .chip{
-      display:inline-flex;align-items:center;gap:6px;
-      border:1px solid var(--line);
-      background:#101821;
-      color:var(--muted);
-      padding:6px 10px;border-radius:999px;font-size:12px;
-    }
-
-    .empty{
-      min-height:50vh;
-      display:grid;
-      place-items:center;
-      text-align:center;
-      padding:30px;
-    }
-
-    .preview{
-      white-space:pre-wrap;
-      line-height:1.7;
-      background:#0e141c;
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:16px;
-      min-height:180px;
-    }
-
-    .folder-row{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .folder-badge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      border:1px solid var(--line);
-      background:#101821;
-      color:var(--muted);
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-    }
-
-    .footer-note{font-size:12px;color:var(--muted);padding:0 4px}
-    .hide{display:none !important}
-
-    .lock-screen{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:20px;
-      background:linear-gradient(180deg,#091018 0%, #0d141d 100%);
-    }
-
-    .lock-card{
-      width:min(100%, 430px);
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:24px;
-      box-shadow:var(--shadow);
-      padding:22px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .lock-icon{
-      width:64px;height:64px;border-radius:18px;
-      display:grid;place-items:center;
-      margin:0 auto;
-      font-size:28px;
-      background:linear-gradient(135deg,#4da7ff,#7a78ff);
-      box-shadow:0 8px 20px rgba(102,179,255,.25);
-    }
-
-    .lock-title{
-      margin:0;
-      text-align:center;
-      font-size:24px;
-    }
-
-    @media (max-width: 900px){
-      .app{grid-template-columns:1fr}
-      .sidebar{border-right:none;border-bottom:1px solid var(--line)}
-      textarea{min-height:38vh}
-    }
-  </style>
+<style>
+body{margin:0;background:#0b0f14;color:#fff;font-family:sans-serif}
+.app{display:grid;grid-template-columns:260px 1fr;height:100vh}
+.sidebar{border-right:1px solid #333;padding:10px}
+.main{padding:10px}
+.note{padding:10px;border-bottom:1px solid #333;cursor:pointer}
+.note.active{background:#222}
+button{margin:4px}
+input,textarea{width:100%;margin:4px 0;background:#111;color:#fff;border:1px solid #333}
+</style>
 </head>
+
 <body>
-  <div id="lockScreen" class="lock-screen">
-    <div class="lock-card">
-      <div class="lock-icon">🔒</div>
-      <h1 class="lock-title">メモ帳をロック解除</h1>
-      <div class="muted" style="text-align:center">初回は4文字以上のパスコードを設定します。以降は同じ端末で入力して開けます。</div>
-      <input id="lockPassInput" type="password" autocomplete="off" placeholder="パスコード">
-      <input id="lockPassConfirmInput" type="password" autocomplete="off" placeholder="確認用パスコード">
-      <div class="actions" style="justify-content:center">
-        <button id="unlockBtn" class="primary">開始 / ロック解除</button>
-        <button id="changePassBtn" class="ghost hide">パスコード変更</button>
-      </div>
-      <div id="lockMessage" class="muted" style="text-align:center"></div>
-    </div>
+
+<div id="lock">
+  <h2>ロック解除</h2>
+  <input id="pass" type="password" placeholder="パスコード">
+  <button onclick="unlock()">解除</button>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <div class="sidebar">
+    <button onclick="createNote()">＋メモ</button>
+    <button onclick="showTrash()">🗑ゴミ箱</button>
+
+    <div id="folderList"></div>
+    <hr>
+    <div id="list"></div>
   </div>
 
-  <div class="app hide" id="appRoot">
-    <aside class="sidebar">
-      <div class="card topbar">
-        <div>
-          <div class="brand">
-            <div class="brand-badge">📝</div>
-            <div>個人用メモ帳</div>
-          </div>
-          <div class="muted" style="margin-top:6px">オフライン / AES暗号化 / フォルダ / 並べ替え対応</div>
-        </div>
-      </div>
+  <div class="main">
+    <input id="title" placeholder="タイトル">
+    <input id="folder" placeholder="フォルダ">
+    <textarea id="content"></textarea>
 
-      <div class="card search-wrap">
-        <div class="row">
-          <div class="grow"><input id="searchInput" placeholder="検索（タイトル / 本文 / タグ）"></div>
-          <div class="w-160">
-            <select id="folderFilter">
-              <option value="">すべてのフォルダ</option>
-            </select>
-          </div>
-          <div class="w-160">
-            <select id="tagFilter">
-              <option value="">すべてのタグ</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <div class="w-160">
-            <select id="sortModeSelect">
-              <option value="custom">並び順: カスタム</option>
-              <option value="updated_desc">更新が新しい順</option>
-              <option value="updated_asc">更新が古い順</option>
-              <option value="title_asc">タイトル昇順</option>
-              <option value="title_desc">タイトル降順</option>
-              <option value="created_desc">作成が新しい順</option>
-              <option value="created_asc">作成が古い順</option>
-            </select>
-          </div>
-          <div class="actions grow">
-            <button id="newBtn" class="primary">＋ 新規メモ</button>
-            <button id="duplicateBtn">複製</button>
-            <button id="moveUpBtn">↑ 上へ</button>
-            <button id="moveDownBtn">↓ 下へ</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="display:flex;flex-direction:column;min-height:280px;max-height:52vh">
-        <div class="topbar" style="padding-bottom:8px">
-          <strong>メモ一覧</strong>
-          <span class="muted" id="noteCount">0件</span>
-        </div>
-        <div id="noteList" class="note-list"></div>
-      </div>
-
-      <div class="card topbar">
-        <div class="toolbar">
-          <button id="exportBtn">書き出し</button>
-          <button id="exportAutoBackupBtn">自動バックアップ出力</button>
-          <button id="migratePassBtn">旧パスから移行</button>
-          <label class="file-btn" for="importInput">読み込み</label>
-          <input id="importInput" type="file" accept="application/json" class="hide">
-        </div>
-        <div class="footer-note">通常バックアップと自動バックアップの両方を読み込めます。</div>
-      </div>
-    </aside>
-
-    <main class="main">
-      <section class="card editor" id="editorCard">
-        <div class="row">
-          <div class="grow"><input id="titleInput" placeholder="タイトル"></div>
-          <div class="w-160"><input id="folderInput" placeholder="フォルダ 例: 日記"></div>
-          <div class="w-200"><input id="tagsInput" placeholder="タグ 例: 日記,ゲーム,買い物"></div>
-        </div>
-
-        <div class="folder-row">
-          <div class="folder-badge" id="folderBadge">フォルダ: 未設定</div>
-          <div class="chip">自動保存</div>
-          <div class="chip">自動バックアップ: 60秒ごと</div>
-          <div class="chip" id="createdChip">作成: -</div>
-          <div class="chip" id="updatedChip">更新: -</div>
-          <div class="chip" id="saveState">状態: 保存済み</div>
-          <div class="chip" id="backupState">バックアップ: 未作成</div>
-        </div>
-
-        <textarea id="contentInput" placeholder="ここにメモを書く"></textarea>
-
-        <div class="row">
-          <div class="actions grow">
-            <button id="pinBtn" class="warn">☆ ピン留め</button>
-            <button id="deleteBtn" class="danger">削除</button>
-            <button id="clearBtn" class="ghost">入力クリア</button>
-          </div>
-          <div class="actions">
-            <button id="previewToggleBtn">プレビュー切替</button>
-          </div>
-        </div>
-
-        <div id="previewBox" class="preview hide"></div>
-      </section>
-
-      <section class="card empty hide" id="emptyState">
-        <div>
-          <h2 style="margin:0 0 8px">メモを作成しよう</h2>
-          <div class="muted">「＋ 新規メモ」で追加できます。保存は自動です。</div>
-        </div>
-      </section>
-    </main>
+    <button onclick="save()">保存</button>
+    <button onclick="deleteNote()">削除</button>
+    <button onclick="restoreNote()">復元</button>
   </div>
 
-  <script>
-    const STORAGE_KEY = 'offline_private_memo_v1';
-    const LOCK_KEY = 'offline_private_memo_lock_v1';
-    const AUTO_BACKUP_KEY = 'offline_private_memo_autobackup_v1';
-    const AUTO_BACKUP_INTERVAL_MS = 60 * 1000;
+</div>
 
-    const enc = new TextEncoder();
-    const dec = new TextDecoder();
+<script>
+const KEY="memo_v3"
+const PASS_KEY="memo_pass"
 
-    const els = {
-      appRoot: document.getElementById('appRoot'),
-      lockScreen: document.getElementById('lockScreen'),
-      lockPassInput: document.getElementById('lockPassInput'),
-      lockPassConfirmInput: document.getElementById('lockPassConfirmInput'),
-      unlockBtn: document.getElementById('unlockBtn'),
-      changePassBtn: document.getElementById('changePassBtn'),
-      lockMessage: document.getElementById('lockMessage'),
+let state={notes:[],selected:null,showTrash:false}
+let passcode=""
 
-      searchInput: document.getElementById('searchInput'),
-      folderFilter: document.getElementById('folderFilter'),
-      tagFilter: document.getElementById('tagFilter'),
-      sortModeSelect: document.getElementById('sortModeSelect'),
-      noteList: document.getElementById('noteList'),
-      noteCount: document.getElementById('noteCount'),
+// ---------- ロック ----------
+function unlock(){
+  const p=document.getElementById("pass").value
 
-      newBtn: document.getElementById('newBtn'),
-      duplicateBtn: document.getElementById('duplicateBtn'),
-      moveUpBtn: document.getElementById('moveUpBtn'),
-      moveDownBtn: document.getElementById('moveDownBtn'),
-      exportBtn: document.getElementById('exportBtn'),
-      exportAutoBackupBtn: document.getElementById('exportAutoBackupBtn'),
-      migratePassBtn: document.getElementById('migratePassBtn'),
-      importInput: document.getElementById('importInput'),
-
-      titleInput: document.getElementById('titleInput'),
-      folderInput: document.getElementById('folderInput'),
-      folderBadge: document.getElementById('folderBadge'),
-      tagsInput: document.getElementById('tagsInput'),
-      contentInput: document.getElementById('contentInput'),
-      createdChip: document.getElementById('createdChip'),
-      updatedChip: document.getElementById('updatedChip'),
-      saveState: document.getElementById('saveState'),
-      backupState: document.getElementById('backupState'),
-      pinBtn: document.getElementById('pinBtn'),
-      deleteBtn: document.getElementById('deleteBtn'),
-      clearBtn: document.getElementById('clearBtn'),
-      previewToggleBtn: document.getElementById('previewToggleBtn'),
-      previewBox: document.getElementById('previewBox'),
-      editorCard: document.getElementById('editorCard'),
-      emptyState: document.getElementById('emptyState')
-    };
-
-    let state = loadState();
-    let saveTimer = null;
-    let previewMode = false;
-    let autoBackupTimer = null;
-    let isChangingPasscode = false;
-    let unlockedPasscode = '';
-
-    function bytesToBase64(bytes) {
-      let binary = '';
-      const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-      for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
-      return btoa(binary);
+  if(!localStorage.getItem(PASS_KEY)){
+    localStorage.setItem(PASS_KEY,p)
+    passcode=p
+  }else{
+    if(p!==localStorage.getItem(PASS_KEY)){
+      alert("違う")
+      return
     }
-
-    function base64ToBytes(base64) {
-      const binary = atob(base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      return bytes;
-    }
-
-    async function deriveAesKeyFromPasscode(passcode, saltBytes) {
-      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passcode), 'PBKDF2', false, ['deriveKey']);
-      return crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt: saltBytes, iterations: 250000, hash: 'SHA-256' },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt', 'decrypt']
-      );
-    }
-
-    async function encryptText(plainText, passcode) {
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const key = await deriveAesKeyFromPasscode(passcode, salt);
-      const cipherBuffer = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plainText));
-      return {
-        salt: bytesToBase64(salt),
-        iv: bytesToBase64(iv),
-        ciphertext: bytesToBase64(cipherBuffer)
-      };
-    }
-
-    async function decryptText(payload, passcode) {
-      const salt = base64ToBytes(payload.salt);
-      const iv = base64ToBytes(payload.iv);
-      const ciphertext = base64ToBytes(payload.ciphertext);
-      const key = await deriveAesKeyFromPasscode(passcode, salt);
-      const plainBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-      return dec.decode(plainBuffer);
-    }
-
-    function getSavedPasscode() {
-      try { return localStorage.getItem(LOCK_KEY) || ''; } catch (err) { return ''; }
-    }
-
-    function savePasscode(pass) {
-      localStorage.setItem(LOCK_KEY, pass);
-    }
-
-    function setLockMessage(msg) {
-      els.lockMessage.textContent = msg || '';
-    }
-
-    function refreshLockUi() {
-      const hasPass = !!getSavedPasscode();
-      els.lockPassInput.value = '';
-      els.lockPassConfirmInput.value = '';
-      els.lockPassConfirmInput.classList.toggle('hide', hasPass && !isChangingPasscode);
-      els.changePassBtn.classList.toggle('hide', !hasPass);
-      els.unlockBtn.textContent = hasPass
-        ? (isChangingPasscode ? '新しいパスコードを保存' : 'ロック解除')
-        : '初回設定して開始';
-      setLockMessage(
-        hasPass
-          ? (isChangingPasscode ? '新しいパスコードを2回入力してください。' : '設定済みのパスコードを入力してください。')
-          : 'まだパスコード未設定です。初回パスコードを登録します。'
-      );
-    }
-
-    async function openApp() {
-      els.lockScreen.style.display = 'none';
-      els.appRoot.classList.remove('hide');
-      els.appRoot.style.display = 'grid';
-      await decryptAllNotesAfterUnlock(unlockedPasscode, true);
-      ensureValidSelectedId();
-      render();
-    }
-
-    async function handleUnlock() {
-      const saved = getSavedPasscode();
-      const pass = els.lockPassInput.value.trim();
-      const confirmPass = els.lockPassConfirmInput.value.trim();
-
-      if (!saved || isChangingPasscode) {
-        if (pass.length < 4) return setLockMessage('パスコードは4文字以上で設定してください。');
-        if (pass !== confirmPass) return setLockMessage('確認用パスコードが一致しません。');
-        savePasscode(pass);
-        unlockedPasscode = pass;
-        isChangingPasscode = false;
-        setLockMessage('保存しました。開きます...');
-        await openApp();
-        return;
-      }
-
-      if (pass !== saved) return setLockMessage('パスコードが違います。');
-      unlockedPasscode = pass;
-      setLockMessage('解除しました。開きます...');
-      await openApp();
-    }
-
-    function nowISO(){ return new Date().toISOString(); }
-    function uid(){ return 'm_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
-
-    function formatDate(iso){
-      const d = new Date(iso);
-      return !iso || Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('ja-JP');
-    }
-
-    function normalizeTags(raw){
-      return String(raw || '')
-        .split(',')
-        .map(v => v.trim())
-        .filter(Boolean)
-        .filter((v, i, arr) => arr.indexOf(v) === i);
-    }
-
-    function normalizeFolder(raw){
-      return String(raw || '').trim();
-    }
-
-    function createBlankNote(){
-      const now = nowISO();
-      return {
-        id: uid(),
-        title: '',
-        folder: '',
-        content: '',
-        encryptedContent: null,
-        tags: [],
-        pinned: false,
-        sortIndex: Date.now(),
-        createdAt: now,
-        updatedAt: now
-      };
-    }
-
-    function normalizeLoadedState(data){
-      if(!data || !Array.isArray(data.notes)) throw new Error('形式が違います');
-
-      const notes = data.notes.map((note, index) => ({
-        id: note.id || uid(),
-        title: String(note.title || ''),
-        folder: normalizeFolder(note.folder || ''),
-        content: String(note.content || ''),
-        encryptedContent: note.encryptedContent || null,
-        tags: Array.isArray(note.tags) ? note.tags.filter(Boolean) : [],
-        pinned: !!note.pinned,
-        sortIndex: Number.isFinite(note.sortIndex) ? note.sortIndex : index,
-        createdAt: note.createdAt || nowISO(),
-        updatedAt: note.updatedAt || note.createdAt || nowISO()
-      }));
-
-      if(!notes.length){
-        const first = createBlankNote();
-        return { notes:[first], selectedId:first.id, sortMode:'custom' };
-      }
-
-      const selectedId = notes.some(n => n.id === data.selectedId) ? data.selectedId : notes[0].id;
-
-      return {
-        notes,
-        selectedId,
-        sortMode: typeof data.sortMode === 'string' ? data.sortMode : 'custom'
-      };
-    }
-
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw){
-          const first = createBlankNote();
-          return { notes:[first], selectedId:first.id, sortMode:'custom' };
-        }
-        return normalizeLoadedState(JSON.parse(raw));
-      }catch(err){
-        const first = createBlankNote();
-        return { notes:[first], selectedId:first.id, sortMode:'custom' };
-      }
-    }
-
-    function ensureValidSelectedId() {
-      if (!state.notes.length) {
-        const first = createBlankNote();
-        state.notes = [first];
-        state.selectedId = first.id;
-        return;
-      }
-      if (!state.notes.some(n => n.id === state.selectedId)) {
-        state.selectedId = state.notes[0].id;
-      }
-    }
-
-    async function encryptAllNotesBeforePersist() {
-      if (!unlockedPasscode) return;
-      for (const note of state.notes) {
-        note.encryptedContent = await encryptText(note.content || '', unlockedPasscode);
-      }
-    }
-
-    async function decryptAllNotesAfterUnlock(passcode = unlockedPasscode, showAlert = false) {
-  if (!passcode) return false;
-
-  let failedCount = 0;
-  let triedCount = 0;
-
-  for (const note of state.notes) {
-    if (note.encryptedContent) {
-      triedCount++;
-      try {
-        note.content = await decryptText(note.encryptedContent, passcode);
-      } catch (err) {
-        failedCount++;
-        note.content = '[復号失敗: パスコードが違うか、バックアップ形式が異なります]';
-      }
-    }
+    passcode=p
   }
 
-  if (failedCount > 0 && showAlert) {
-    alert(`${failedCount}件のメモを復号できませんでした。バックアップ作成時と同じパスコードか確認してください。`);
+  load()
+  document.getElementById("lock").style.display="none"
+  document.getElementById("app").style.display="grid"
+}
+
+// ---------- データ ----------
+function saveStorage(){
+  localStorage.setItem(KEY,JSON.stringify(state))
+}
+
+function load(){
+  const raw=localStorage.getItem(KEY)
+  if(raw) state=JSON.parse(raw)
+  render()
+}
+
+// ---------- CRUD ----------
+function createNote(){
+  const n={
+    id:Date.now(),
+    title:"",
+    content:"",
+    folder:"",
+    deleted:false
   }
+  state.notes.push(n)
+  state.selected=n.id
+  saveStorage()
+  render()
+}
 
-  return triedCount > 0 && failedCount === 0;
+function save(){
+  const n=get()
+  if(!n)return
+
+  n.title=title.value
+  n.content=content.value
+  n.folder=folder.value
+
+  saveStorage()
+  render()
+}
+
+function deleteNote(){
+  const n=get()
+  if(!n)return
+  n.deleted=true
+  saveStorage()
+  render()
+}
+
+function restoreNote(){
+  const n=get()
+  if(!n)return
+  n.deleted=false
+  saveStorage()
+  render()
+}
+
+function get(){
+  return state.notes.find(n=>n.id===state.selected)
+}
+
+// ---------- 表示 ----------
+function render(){
+  renderFolders()
+  renderList()
+
+  const n=get()
+  if(!n)return
+
+  title.value=n.title
+  content.value=n.content
+  folder.value=n.folder
+}
+
+function renderList(){
+  const el=document.getElementById("list")
+  el.innerHTML=""
+
+  const list=state.notes.filter(n=>n.deleted===state.showTrash)
+
+  list.forEach(n=>{
+    const div=document.createElement("div")
+    div.className="note"+(n.id===state.selected?" active":"")
+    div.innerText=n.title||"無題"
+    div.onclick=()=>{state.selected=n.id;render()}
+    el.appendChild(div)
+  })
+}
+
+function renderFolders(){
+  const el=document.getElementById("folderList")
+  el.innerHTML=""
+
+  const folders=[...new Set(state.notes.map(n=>n.folder).filter(Boolean))]
+
+  folders.forEach(f=>{
+    const d=document.createElement("div")
+    d.innerText="📁 "+f
+    d.onclick=()=>{
+      state.showTrash=false
+      state.notes=state.notes
+      render()
     }
-    
+    el.appendChild(d)
+  })
+}
+
+// ---------- モード ----------
+function showTrash(){
+  state.showTrash=!state.showTrash
+  render()
+}
+</script>
 
-      return triedCount > 0 && failedCount === 0;
-    }
-
-    async function persist(){
-      await encryptAllNotesBeforePersist();
-      const stateToSave = {
-        ...state,
-        notes: state.notes.map(note => ({ ...note, content: '' }))
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-      els.saveState.textContent = '状態: 保存済み';
-    }
-
-    function loadAutoBackup(){
-      try{
-        const raw = localStorage.getItem(AUTO_BACKUP_KEY);
-        if(!raw) return null;
-        const data = JSON.parse(raw);
-        return (!data || !data.state || !Array.isArray(data.state.notes)) ? null : data;
-      }catch(err){
-        return null;
-      }
-    }
-
-    function updateBackupChip(){
-      const backup = loadAutoBackup();
-      els.backupState.textContent = backup?.savedAt ? 'バックアップ: ' + formatDate(backup.savedAt) : 'バックアップ: 未作成';
-    }
-
-    async function saveAutoBackup(){
-      await encryptAllNotesBeforePersist();
-      const backupState = {
-        ...state,
-        notes: state.notes.map(note => ({ ...note, content: '' }))
-      };
-      const payload = {
-        savedAt: nowISO(),
-        app: 'offline-private-memo',
-        version: 2,
-        state: backupState
-      };
-      localStorage.setItem(AUTO_BACKUP_KEY, JSON.stringify(payload));
-      updateBackupChip();
-    }
-
-    function scheduleAutoBackup(){
-      clearInterval(autoBackupTimer);
-      autoBackupTimer = setInterval(() => { saveAutoBackup().catch(() => {}); }, AUTO_BACKUP_INTERVAL_MS);
-    }
-
-    function downloadJson(filename, data){
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function queueSave(){
-      els.saveState.textContent = '状態: 保存中...';
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        persist().catch(() => { els.saveState.textContent = '状態: 保存失敗'; });
-      }, 250);
-    }
-
-    function getSelectedNote(){
-      return state.notes.find(n => n.id === state.selectedId) || null;
-    }
-
-    function compareNotes(a, b){
-      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-      const mode = state.sortMode || 'custom';
-      if (mode === 'custom') return (a.sortIndex ?? 0) - (b.sortIndex ?? 0);
-      if (mode === 'updated_desc') return new Date(b.updatedAt) - new Date(a.updatedAt);
-      if (mode === 'updated_asc') return new Date(a.updatedAt) - new Date(b.updatedAt);
-      if (mode === 'created_desc') return new Date(b.createdAt) - new Date(a.createdAt);
-      if (mode === 'created_asc') return new Date(a.createdAt) - new Date(b.createdAt);
-      if (mode === 'title_desc') return String(b.title || '').localeCompare(String(a.title || ''), 'ja');
-      return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
-    }
-
-    function sortedNotes(notes){
-      return [...notes].sort(compareNotes);
-    }
-
-    function filteredNotes(){
-      const q = els.searchInput.value.trim().toLowerCase();
-      const folder = els.folderFilter.value;
-      const tag = els.tagFilter.value;
-      return sortedNotes(state.notes).filter(n => {
-        const hay = [n.title, n.folder, n.content, (n.tags||[]).join(' ')].join(' ').toLowerCase();
-        const qOk = !q || hay.includes(q);
-        const folderOk = !folder || (n.folder || '') === folder;
-        const tagOk = !tag || (n.tags || []).includes(tag);
-        return qOk && folderOk && tagOk;
-      });
-    }
-
-    function escapeHtml(s){
-      return String(s)
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;')
-        .replace(/'/g,'&#39;');
-    }
-
-    function renderPreview(text){
-      return escapeHtml(text)
-        .replace(/^### (.*)$/gm,'<h3>$1</h3>')
-        .replace(/^## (.*)$/gm,'<h2>$1</h2>')
-        .replace(/^# (.*)$/gm,'<h1>$1</h1>')
-        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g,'<em>$1</em>')
-        .replace(/`([^`]+)`/g,'<code>$1</code>')
-        .replace(/\n/g,'<br>');
-    }
-
-    function rebuildFolderFilter(){
-      const allFolders = [...new Set(state.notes.map(n => normalizeFolder(n.folder || '')).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
-      const current = els.folderFilter.value;
-      els.folderFilter.innerHTML = '<option value="">すべてのフォルダ</option>' + allFolders.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
-      if (allFolders.includes(current)) els.folderFilter.value = current;
-    }
-
-    function rebuildTagFilter(){
-      const allTags = [...new Set(state.notes.flatMap(n => n.tags || []))].sort((a,b)=>a.localeCompare(b,'ja'));
-      const current = els.tagFilter.value;
-      els.tagFilter.innerHTML = '<option value="">すべてのタグ</option>' + allTags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-      if (allTags.includes(current)) els.tagFilter.value = current;
-    }
-
-    function renderList(){
-      const notes = filteredNotes();
-      els.noteCount.textContent = notes.length + '件';
-
-      if(!notes.length){
-        els.noteList.innerHTML = '<div class="muted" style="padding:12px">該当するメモがありません</div>';
-        return;
-      }
-
-      els.noteList.innerHTML = notes.map(note => {
-        const title = note.title?.trim() || '無題メモ';
-        const snippet = (note.content || '').replace(/\n+/g, ' ').trim().slice(0, 52) || '本文なし';
-        const tags = (note.tags || []).slice(0,3).map(t => `#${escapeHtml(t)}`).join(' ');
-        const folder = note.folder ? `📁 ${escapeHtml(note.folder)}` : '📁 未設定';
-
-        return `<button class="note-item ${note.id === state.selectedId ? 'active' : ''}" data-id="${note.id}">
-          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
-            <strong style="text-align:left">${note.pinned ? '⭐ ' : ''}${escapeHtml(title)}</strong>
-            <span class="muted">${formatDate(note.updatedAt).slice(0,16)}</span>
-          </div>
-          <div class="muted" style="text-align:left">${folder}</div>
-          <div class="muted" style="text-align:left">${escapeHtml(snippet)}</div>
-          ${tags ? `<div class="muted" style="text-align:left">${tags}</div>` : ''}
-        </button>`;
-      }).join('');
-
-      [...els.noteList.querySelectorAll('.note-item')].forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.selectedId = btn.dataset.id;
-          renderEditor();
-          renderList();
-        });
-      });
-    }
-
-    function renderEditor(){
-      const note = getSelectedNote();
-      const hasNote = !!note;
-      els.editorCard.classList.toggle('hide', !hasNote);
-      els.emptyState.classList.toggle('hide', hasNote);
-
-      if(!note) return;
-
-      els.titleInput.value = note.title || '';
-      els.folderInput.value = note.folder || '';
-      els.folderBadge.textContent = 'フォルダ: ' + (note.folder || '未設定');
-      els.tagsInput.value = (note.tags || []).join(', ');
-      els.contentInput.value = note.content || '';
-      els.createdChip.textContent = '作成: ' + formatDate(note.createdAt);
-      els.updatedChip.textContent = '更新: ' + formatDate(note.updatedAt);
-      els.pinBtn.textContent = note.pinned ? '★ ピン解除' : '☆ ピン留め';
-      els.previewBox.innerHTML = renderPreview(note.content || '');
-      els.previewBox.classList.toggle('hide', !previewMode);
-      els.contentInput.classList.toggle('hide', previewMode);
-      els.sortModeSelect.value = state.sortMode || 'custom';
-    }
-
-    function render(){
-      ensureValidSelectedId();
-      rebuildFolderFilter();
-      rebuildTagFilter();
-      renderList();
-      renderEditor();
-      updateBackupChip();
-    }
-
-    function updateSelectedNote(patch){
-      const idx = state.notes.findIndex(n => n.id === state.selectedId);
-      if(idx < 0) return;
-      state.notes[idx] = { ...state.notes[idx], ...patch, updatedAt: nowISO() };
-      queueSave();
-      render();
-    }
-
-    function resequenceCustomOrder(){
-      const ordered = state.notes.slice().sort((a,b) => {
-        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-        return (a.sortIndex ?? 0) - (b.sortIndex ?? 0);
-      });
-      ordered.forEach((note, index) => {
-        note.sortIndex = index;
-      });
-    }
-
-    function moveSelected(delta){
-      if ((state.sortMode || 'custom') !== 'custom') {
-        alert('並び替えが「カスタム」のときだけ手動移動できます。');
-        return;
-      }
-      const current = getSelectedNote();
-      if (!current) return;
-
-      const samePinned = state.notes
-        .filter(n => n.pinned === current.pinned)
-        .sort((a,b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
-
-      const currentIndex = samePinned.findIndex(n => n.id === current.id);
-      const targetIndex = currentIndex + delta;
-
-      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= samePinned.length) return;
-
-      const other = samePinned[targetIndex];
-      const temp = current.sortIndex;
-      current.sortIndex = other.sortIndex;
-      other.sortIndex = temp;
-
-      resequenceCustomOrder();
-      queueSave();
-      render();
-    }
-
-    async function migrateEncryptionToCurrentPasscode() {
-      const currentPass = getSavedPasscode();
-      if (!currentPass) {
-        alert('現在のパスコードが未設定です。');
-        return;
-      }
-
-      const oldPass = prompt('昔のバックアップ用パスコードを入力してください');
-      if (!oldPass) return;
-
-      let successCount = 0;
-      let failCount = 0;
-
-      for (const note of state.notes) {
-        if (!note.encryptedContent) continue;
-
-        try {
-          const plain = await decryptText(note.encryptedContent, oldPass);
-          note.content = plain;
-          note.encryptedContent = await encryptText(plain, currentPass);
-          successCount++;
-        } catch (err) {
-          failCount++;
-        }
-      }
-
-      unlockedPasscode = currentPass;
-      await persist();
-      await saveAutoBackup();
-      render();
-
-      alert(`移行完了: 成功 ${successCount}件 / 失敗 ${failCount}件`);
-    }
-
-    els.unlockBtn.onclick = () => {
-      handleUnlock().catch(() => setLockMessage('ロック解除に失敗しました。'));
-    };
-
-    els.changePassBtn.addEventListener('click', () => {
-      const saved = getSavedPasscode();
-      const current = prompt('現在のパスコードを入力');
-      if (current === null) return;
-      if (current !== saved) return setLockMessage('現在のパスコードが違います。');
-      isChangingPasscode = true;
-      refreshLockUi();
-    });
-
-    els.lockPassInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleUnlock().catch(() => setLockMessage('ロック解除に失敗しました。'));
-    });
-
-    els.lockPassConfirmInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleUnlock().catch(() => setLockMessage('ロック解除に失敗しました。'));
-    });
-
-    els.newBtn.addEventListener('click', () => {
-      const note = createBlankNote();
-      const maxSort = Math.max(-1, ...state.notes.filter(n => n.pinned === false).map(n => n.sortIndex ?? 0));
-      note.sortIndex = maxSort + 1;
-      state.notes.push(note);
-      state.selectedId = note.id;
-      queueSave();
-      render();
-      els.titleInput.focus();
-    });
-
-    els.duplicateBtn.addEventListener('click', () => {
-      const current = getSelectedNote();
-      if(!current) return;
-
-      const maxSort = Math.max(-1, ...state.notes.filter(n => n.pinned === current.pinned).map(n => n.sortIndex ?? 0));
-      const copy = {
-        ...(typeof structuredClone === 'function' ? structuredClone(current) : JSON.parse(JSON.stringify(current))),
-        id: uid(),
-        title: (current.title || '無題メモ') + '（コピー）',
-        pinned: current.pinned,
-        sortIndex: maxSort + 1,
-        createdAt: nowISO(),
-        updatedAt: nowISO()
-      };
-
-      state.notes.push(copy);
-      state.selectedId = copy.id;
-      queueSave();
-      render();
-    });
-
-    els.moveUpBtn.addEventListener('click', () => moveSelected(-1));
-    els.moveDownBtn.addEventListener('click', () => moveSelected(1));
-
-    els.deleteBtn.addEventListener('click', () => {
-      const current = getSelectedNote();
-      if(!current) return;
-      if(!confirm('このメモを削除しますか？')) return;
-
-      state.notes = state.notes.filter(n => n.id !== current.id);
-
-      if(!state.notes.length){
-        const first = createBlankNote();
-        state.notes = [first];
-        state.selectedId = first.id;
-      } else {
-        state.selectedId = state.notes[0].id;
-      }
-
-      resequenceCustomOrder();
-      queueSave();
-      render();
-    });
-
-    els.clearBtn.addEventListener('click', () => {
-      if(!confirm('入力中のタイトル・本文を空にしますか？')) return;
-      updateSelectedNote({ title:'', folder:'', content:'', tags:[] });
-    });
-
-    els.pinBtn.addEventListener('click', () => {
-      const current = getSelectedNote();
-      if(!current) return;
-      current.pinned = !current.pinned;
-      const maxSort = Math.max(-1, ...state.notes.filter(n => n.pinned === current.pinned).map(n => n.sortIndex ?? 0));
-      current.sortIndex = maxSort + 1;
-      queueSave();
-      render();
-    });
-
-    els.previewToggleBtn.addEventListener('click', () => {
-      previewMode = !previewMode;
-      renderEditor();
-    });
-
-    els.titleInput.addEventListener('input', e => updateSelectedNote({ title: e.target.value }));
-    els.folderInput.addEventListener('input', e => updateSelectedNote({ folder: normalizeFolder(e.target.value) }));
-    els.tagsInput.addEventListener('input', e => updateSelectedNote({ tags: normalizeTags(e.target.value) }));
-    els.contentInput.addEventListener('input', e => updateSelectedNote({ content: e.target.value }));
-
-    els.searchInput.addEventListener('input', renderList);
-    els.folderFilter.addEventListener('change', renderList);
-    els.tagFilter.addEventListener('change', renderList);
-
-    els.sortModeSelect.addEventListener('change', e => {
-      state.sortMode = e.target.value;
-      queueSave();
-      render();
-    });
-
-    els.exportBtn.addEventListener('click', async () => {
-      await encryptAllNotesBeforePersist();
-      const stateToExport = { ...state, notes: state.notes.map(note => ({ ...note, content: '' })) };
-      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      downloadJson(`memo-backup-${stamp}.json`, stateToExport);
-    });
-
-    els.exportAutoBackupBtn.addEventListener('click', () => {
-      const backup = loadAutoBackup();
-      if(!backup) return alert('まだ自動バックアップがありません。1分ほど使うか、画面を操作してから試してください。');
-      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      downloadJson(`memo-autobackup-${stamp}.json`, backup);
-    });
-
-    els.migratePassBtn.addEventListener('click', () => {
-      migrateEncryptionToCurrentPasscode().catch(() => {
-        alert('移行に失敗しました。');
-      });
-    });
-
-   els.importInput.addEventListener('change', async (e) => {
-  const file = e.target.files?.[0];
-  if(!file) return;
-
-  try{
-    const text = await file.text();
-    const data = JSON.parse(text);
-    let nextState = null;
-
-    if (data && Array.isArray(data.notes)) {
-      nextState = normalizeLoadedState(data);
-    } else if (data && data.state && Array.isArray(data.state.notes)) {
-      nextState = normalizeLoadedState(data.state);
-    } else {
-      throw new Error('形式が違います');
-    }
-
-    if(!confirm('現在のメモを上書きして読み込みますか？')) return;
-
-    state = nextState;
-    ensureValidSelectedId();
-
-    const hasEncryptedNotes = state.notes.some(note => note.encryptedContent);
-
-    if (hasEncryptedNotes) {
-      let importPasscode = '';
-
-      const currentPass = getSavedPasscode();
-
-      if (currentPass) {
-        const useCurrent = confirm(
-          '現在のパスコードで復号しますか？\n' +
-          '違う場合は「キャンセル」でバックアップ作成時のパスコードを入力します。'
-        );
-
-        if (useCurrent) {
-          importPasscode = currentPass;
-        } else {
-          importPasscode = prompt('バックアップ作成時のパスコードを入力してください') || '';
-        }
-      } else {
-        importPasscode = prompt('バックアップ作成時のパスコードを入力してください') || '';
-      }
-
-      if (!importPasscode) {
-        alert('復号用パスコードが未入力のため、本文は復元されませんでした。');
-      } else {
-        const decryptOk = await decryptAllNotesAfterUnlock(importPasscode, true);
-
-        if (decryptOk) {
-          // 重要:
-          // 読み込みに成功したパスコードを、今後の正式パスコードとして採用
-          savePasscode(importPasscode);
-          unlockedPasscode = importPasscode;
-
-          // そのパスコードで全メモを再暗号化
-          for (const note of state.notes) {
-            if (typeof note.content === 'string' && !note.content.startsWith('[復号失敗')) {
-              note.encryptedContent = await encryptText(note.content, importPasscode);
-            }
-          }
-        } else {
-          alert('復号に失敗しました。パスコードを確認してください。');
-        }
-      }
-    }
-
-    // 先に画面反映
-    render();
-
-    // その後に保存
-    await persist();
-    await saveAutoBackup();
-
-    alert('読み込みました');
-  } catch(err) {
-    alert('読み込みに失敗しました。JSONファイルを確認してください。');
-  } finally {
-    e.target.value = '';
-  }
-});
-
-    window.addEventListener('beforeunload', () => {
-      persist().catch(() => {});
-      saveAutoBackup().catch(() => {});
-    });
-
-    scheduleAutoBackup();
-    saveAutoBackup().catch(() => {});
-    refreshLockUi();
-    els.appRoot.style.display = 'none';
-  </script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        try {
-          await navigator.serviceWorker.register('./sw.js');
-          console.log('Service Worker登録OK');
-        } catch (err) {
-          console.error('Service Worker登録失敗', err);
-        }
-      });
-    }
-  </script>
 </body>
 </html>
