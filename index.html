@@ -1250,7 +1250,20 @@
     });
 
     els.titleInput.addEventListener('input', e => updateSelectedNote({ title: e.target.value }));
-    els.folderInput.addEventListener('input', e => updateSelectedNote({ folder: normalizeFolder(e.target.value) }));
+    els.folderInput.addEventListener('change', e => {
+  updateSelectedNote({ folder: normalizeFolder(e.target.value) });
+});
+
+els.folderInput.addEventListener('blur', e => {
+  updateSelectedNote({ folder: normalizeFolder(e.target.value) });
+});
+
+els.folderInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    els.folderInput.blur();
+  }
+});
     els.tagsInput.addEventListener('input', e => updateSelectedNote({ tags: normalizeTags(e.target.value) }));
     els.contentInput.addEventListener('input', e => updateSelectedNote({ content: e.target.value }));
 
