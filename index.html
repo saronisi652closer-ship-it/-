@@ -1091,74 +1091,87 @@
       });
     });
 
-    els.importInput.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if(!file) return;
+   els.importInput.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if(!file) return;
 
-      try{
-        const text = await file.text();
-        const data = JSON.parse(text);
-        let nextState = null;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    let nextState = null;
 
-        if (data && Array.isArray(data.notes)) {
-          nextState = normalizeLoadedState(data);
-        } else if (data && data.state && Array.isArray(data.state.notes)) {
-          nextState = normalizeLoadedState(data.state);
+    if (data && Array.isArray(data.notes)) {
+      nextState = normalizeLoadedState(data);
+    } else if (data && data.state && Array.isArray(data.state.notes)) {
+      nextState = normalizeLoadedState(data.state);
+    } else {
+      throw new Error('形式が違います');
+    }
+
+    if(!confirm('現在のメモを上書きして読み込みますか？')) return;
+
+    state = nextState;
+    ensureValidSelectedId();
+
+    const hasEncryptedNotes = state.notes.some(note => note.encryptedContent);
+
+    if (hasEncryptedNotes) {
+      let importPasscode = '';
+
+      const currentPass = getSavedPasscode();
+
+      if (currentPass) {
+        const useCurrent = confirm(
+          '現在のパスコードで復号しますか？\n' +
+          '違う場合は「キャンセル」でバックアップ作成時のパスコードを入力します。'
+        );
+
+        if (useCurrent) {
+          importPasscode = currentPass;
         } else {
-          throw new Error('形式が違います');
+          importPasscode = prompt('バックアップ作成時のパスコードを入力してください') || '';
         }
-
-        if(!confirm('現在のメモを上書きして読み込みますか？')) return;
-
-        state = nextState;
-        ensureValidSelectedId();
-
-        const hasEncryptedNotes = state.notes.some(note => note.encryptedContent);
-
-        if (hasEncryptedNotes) {
-          let importPasscode = unlockedPasscode;
-
-          if (!importPasscode) {
-            importPasscode = prompt('このバックアップを作成したときのパスコードを入力してください');
-          } else {
-            const useCurrent = confirm('現在のパスコードで復号しますか？\n違う場合は「キャンセル」で別のパスコードを入力します。');
-            if (!useCurrent) {
-              importPasscode = prompt('バックアップ作成時のパスコードを入力してください');
-            }
-          }
-
-          if (!importPasscode) {
-            alert('復号用パスコードが未入力のため、本文は復元されませんでした。');
-          } else {
-            const decryptOk = await decryptAllNotesAfterUnlock(importPasscode, true);
-
-            if (decryptOk) {
-              const currentPass = getSavedPasscode();
-
-              if (currentPass && importPasscode !== currentPass) {
-                for (const note of state.notes) {
-                  if (note.content && !note.content.startsWith('[復号失敗')) {
-                    note.encryptedContent = await encryptText(note.content, currentPass);
-                  }
-                }
-                unlockedPasscode = currentPass;
-              } else {
-                unlockedPasscode = importPasscode;
-              }
-            }
-          }
-        }
-
-        render();
-        await persist();
-        await saveAutoBackup();
-        alert('読み込みました');
-      } catch(err) {
-        alert('読み込みに失敗しました。JSONファイルを確認してください。');
-      } finally {
-        e.target.value = '';
+      } else {
+        importPasscode = prompt('バックアップ作成時のパスコードを入力してください') || '';
       }
-    });
+
+      if (!importPasscode) {
+        alert('復号用パスコードが未入力のため、本文は復元されませんでした。');
+      } else {
+        const decryptOk = await decryptAllNotesAfterUnlock(importPasscode, true);
+
+        if (decryptOk) {
+          // 重要:
+          // 読み込みに成功したパスコードを、今後の正式パスコードとして採用
+          savePasscode(importPasscode);
+          unlockedPasscode = importPasscode;
+
+          // そのパスコードで全メモを再暗号化
+          for (const note of state.notes) {
+            if (typeof note.content === 'string' && !note.content.startsWith('[復号失敗')) {
+              note.encryptedContent = await encryptText(note.content, importPasscode);
+            }
+          }
+        } else {
+          alert('復号に失敗しました。パスコードを確認してください。');
+        }
+      }
+    }
+
+    // 先に画面反映
+    render();
+
+    // その後に保存
+    await persist();
+    await saveAutoBackup();
+
+    alert('読み込みました');
+  } catch(err) {
+    alert('読み込みに失敗しました。JSONファイルを確認してください。');
+  } finally {
+    e.target.value = '';
+  }
+});
 
     window.addEventListener('beforeunload', () => {
       persist().catch(() => {});
