@@ -659,26 +659,30 @@
     }
 
     async function decryptAllNotesAfterUnlock(passcode = unlockedPasscode, showAlert = false) {
-      if (!passcode) return false;
+  if (!passcode) return false;
 
-      let failedCount = 0;
-      let triedCount = 0;
+  let failedCount = 0;
+  let triedCount = 0;
 
-      for (const note of state.notes) {
-        if (note.encryptedContent) {
-          triedCount++;
-          try {
-            note.content = await decryptText(note.encryptedContent, passcode);
-          } catch (err) {
-            failedCount++;
-            note.content = '[復号失敗: パスコードが違うか、バックアップ形式が異なります]';
-          }
-        }
+  for (const note of state.notes) {
+    if (note.encryptedContent) {
+      triedCount++;
+      try {
+        note.content = await decryptText(note.encryptedContent, passcode);
+      } catch (err) {
+        failedCount++;
+        note.content = '[復号失敗: パスコードが違うか、バックアップ形式が異なります]';
       }
+    }
+  }
 
-      if (failedCount > 0 && showAlert) {
-        alert(`${failedCount}件のメモを復号できませんでした。バックアップ作成時と同じパスコードか確認してください。`);
-      }
+  if (failedCount > 0 && showAlert) {
+    alert(`${failedCount}件のメモを復号できませんでした。バックアップ作成時と同じパスコードか確認してください。`);
+  }
+
+  return triedCount > 0 && failedCount === 0;
+    }
+    
 
       return triedCount > 0 && failedCount === 0;
     }
